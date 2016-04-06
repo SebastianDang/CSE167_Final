@@ -28,7 +28,6 @@ public:
 	void update();
 	void spin(float);
 
-
 	void pointUp();
 	void pointDown();
 	void left();
