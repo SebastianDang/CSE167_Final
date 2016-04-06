@@ -11,12 +11,11 @@
 
 OBJObject::OBJObject(const char *filepath) 
 {
-	//Initialize World, Angle, Point Size, Scale.
+	//Initialize World, Angle, Orbit Angle, Point Size.
 	toWorld = glm::mat4(1.0f);
 	this->angle = 0.0f;
 	this->orbitAngle = 0.0f;
 	this->pointSize = 1.0f;
-	this->scale = 0.0f;
 	//Parse the object @ filepath.
 	parse(filepath);
 }
@@ -100,7 +99,6 @@ void OBJObject::update()
 void OBJObject::spin(float deg)
 {
 	this->toWorld *= glm::rotate(glm::mat4(1.0f), 1.0f / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
-	//glRotatef(deg, 0.0f, 1.0f, 0.0f);
 }
 
 void OBJObject::pointUp() {
@@ -123,6 +121,7 @@ void OBJObject::left()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(-MOVE_STEP, 0.0f, 0.0f));
 	this->toWorld *= translateInverse;
@@ -134,6 +133,7 @@ void OBJObject::right()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(MOVE_STEP, 0.0f, 0.0f));
 	this->toWorld *= translateInverse;
@@ -145,6 +145,7 @@ void OBJObject::up()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, MOVE_STEP, 0.0f));
 	this->toWorld *= translateInverse;
@@ -156,6 +157,7 @@ void OBJObject::down()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -MOVE_STEP, 0.0f));
 	this->toWorld *= translateInverse;
@@ -167,6 +169,7 @@ void OBJObject::in()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -MOVE_STEP));
 	this->toWorld *= translateInverse;
@@ -178,6 +181,7 @@ void OBJObject::out()
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 translateInverse = glm::inverse(translate);
+
 	this->toWorld *= translate;
 	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, MOVE_STEP));
 	this->toWorld *= translateInverse;
@@ -185,40 +189,16 @@ void OBJObject::out()
 
 void OBJObject::scaleUp()
 {
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
 	//Scale by World.
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
 	this->toWorld *= scaleMatrix;
-	//Scale by Model.
-	this->scale++;
-	/*
-	for (unsigned int i = 0; i < vertices.size(); ++i)
-	{
-		glm::vec4 vec3Point = glm::vec4(vertices[i].x, vertices[i].y, vertices[i].z, 1.0f);
-		vec3Point = scaleMatrix * vec3Point;
-		glm::vec3 transformedVec3 = glm::vec3(vec3Point);
-		vertices[i] = transformedVec3;
-		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-	}
-	*/
 }
 
 void OBJObject::scaleDown()
 {
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
 	//Scale by World.
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
 	this->toWorld *= scaleMatrix;
-	//Scale by Model.
-	this->scale--;
-	/*
-	for (unsigned int i = 0; i < vertices.size(); ++i)
-	{
-		glm::vec4 vec3Point = glm::vec4(vertices[i].x, vertices[i].y, vertices[i].z, 1.0f);
-		vec3Point = scaleMatrix * vec3Point;
-		glm::vec3 transformedVec3 = glm::vec3(vec3Point);
-		vertices[i] = transformedVec3;
-		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-	}
-	*/
 }
 
 void OBJObject::orbitCW()
@@ -241,7 +221,7 @@ void OBJObject::orbitCW()
 
 void OBJObject::orbitCCW()
 {
-	this->orbitAngle += ORBIT_STEP;
+	this->orbitAngle += ORBIT_STEP;//Update Angle.
 	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
 	glm::vec3 originVec3 = glm::vec3(originVec4);
 
@@ -259,14 +239,10 @@ void OBJObject::orbitCCW()
 
 void OBJObject::reset()
 {
-	//Fix Scaling (model)
-	while (scale > 0) { scaleDown(); }
-	while (scale < 0) { scaleUp(); }
-	//Reset the Rotation (world)
+	//Reset any rotations and point size (World).
 	this->angle = 0.0f;
 	this->orbitAngle = 0.0f;
 	this->pointSize = 1.0f;
-	this->scale = 0.0f;
-	//Fix Orientation, position in space (world)
+	//Fix Orientation, position in space (World).
 	toWorld = glm::mat4(1.0f);
 }

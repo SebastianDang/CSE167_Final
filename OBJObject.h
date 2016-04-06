@@ -10,24 +10,23 @@
 class OBJObject
 {
 private:
-std::vector<unsigned int> indices;
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
-glm::mat4 toWorld;
+	std::vector<unsigned int> indices;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	glm::mat4 toWorld;
+
+	void spin(float);
 
 public:
 	OBJObject(const char* filepath);
 
-	float scale;
-	float pointSize;
 	float angle;
 	float orbitAngle;
+	float pointSize;
 
 	void parse(const char* filepath);
 	void draw();
 	void update();
-	void spin(float);
-
 	void pointUp();
 	void pointDown();
 	void left();
