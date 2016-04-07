@@ -14,18 +14,32 @@ private:
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	glm::mat4 toWorld;
-
-	void spin(float);
+	glm::mat4 c_inverse;
+	glm::mat4 projection;
+	glm::mat4 viewport;
 
 public:
 	OBJObject(const char* filepath);
 
+	std::vector<glm::vec3> getVertices();
+	std::vector<glm::vec3> getNormals();
+	glm::mat4 getWorld();
+	glm::mat4 getCamera();
+	glm::mat4 getProjection();
+	glm::mat4 getViewport();
+
+	void setWorld();
+	void setCamera();
+	void setProjection(float, float);
+	void setViewport(float, float);
+	
 	float angle;
 	float orbitAngle;
 	float pointSize;
 
 	void parse(const char* filepath);
 	void draw();
+	void spin(float);
 	void update();
 	void pointUp();
 	void pointDown();

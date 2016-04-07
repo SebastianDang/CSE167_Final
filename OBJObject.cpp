@@ -12,12 +12,75 @@
 OBJObject::OBJObject(const char *filepath) 
 {
 	//Initialize World, Angle, Orbit Angle, Point Size.
-	toWorld = glm::mat4(1.0f);
 	this->angle = 0.0f;
 	this->orbitAngle = 0.0f;
 	this->pointSize = 1.0f;
+	//toWorld Matrix
+	setWorld();
+	//C_inverse Matrix
+	setCamera();
 	//Parse the object @ filepath.
 	parse(filepath);
+}
+
+std::vector<glm::vec3> OBJObject::getVertices()
+{
+	return this->vertices;
+}
+
+std::vector<glm::vec3> OBJObject::getNormals()
+{
+	return this->normals;
+}
+
+glm::mat4 OBJObject::getWorld() 
+{
+	return this->toWorld;
+}
+
+glm::mat4 OBJObject::getCamera()
+{
+	return this->c_inverse;
+}
+
+glm::mat4 OBJObject::getProjection()
+{
+	return this->projection;
+}
+
+glm::mat4 OBJObject::getViewport()
+{
+	return this->viewport;
+}
+
+void OBJObject::setWorld()
+{
+	this->toWorld = glm::mat4(1.0f);
+}
+
+void OBJObject::setCamera()
+{
+	glm::vec3 e = glm::vec3(0.0f, 0.0f, 20.0f);
+	glm::vec3 d = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	this->c_inverse = glm::lookAt(e, d, up);
+}
+
+void OBJObject::setProjection(float window_width, float window_height)
+{
+	this->projection = glm::perspective(glm::radians(60.0f), (float)window_width / (float)window_height, 1.0f, 1000.0f);
+}
+
+void OBJObject::setViewport(float window_width, float window_height)
+{
+	float viewportX = (window_width - 0.0f) * (0.5f);
+	float viewportY = (window_height - 0.0f) * (0.5f);
+	float viewportX2 = (window_width + 0.0f) * (0.5f);
+	float viewportY2 = (window_height + 0.0f) * (0.5f);
+	this->viewport = glm::mat4(viewportX, 0.0f, 0.0f, viewportX2,
+		0.0f, viewportY, 0.0f, viewportY2,
+		0.0f, 0.0f, 0.5f, 0.5f,
+		0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 void OBJObject::parse(const char *filepath) 
@@ -60,13 +123,11 @@ void OBJObject::draw()
 	// Loop through all the vertices of this OBJ Object and render them
 	for (unsigned int i = 0; i < vertices.size(); ++i) 
 	{
-		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
-		
 		glm::vec3 normalized = glm::normalize(normals[i]);//Normalize for the colors.
 		float red = normalized.x;
 		float green = normalized.y;
 		float blue = normalized.z;
-	
+
 		if (red < 0.0f) { red = 0.0f + (-0.5f)*red; }
 		else red = 0.0f + (0.5f)*red;
 
@@ -75,8 +136,10 @@ void OBJObject::draw()
 
 		if (blue < 0.0f) { blue = 0.0f + (-0.5f)*blue; }
 		else blue = 0.0f + (0.5f)*blue;
-		
+
 		glColor3f(red, green, blue);
+
+		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
 	}
 	glEnd();
 	// Pop the save state off the matrix stack

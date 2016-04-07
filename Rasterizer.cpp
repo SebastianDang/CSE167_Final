@@ -5,29 +5,10 @@
 
 #include "OBJObject.h"
 
-#define DEBUG 0
-#define MOVE_STEP 1.0f
-#define ORBIT_STEP 5.0f
-#define SPIN_STEP 1.0f
-#define POINT_SIZE_STEP 1.0f
-#define POINT_SIZE_MAX	10000.0f
-#define POINT_SIZE_MIN	0.0f
-
-
 static int window_width = 512, window_height = 512;
 static float* pixels = new float[window_width * window_height * 3];
 
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
-
-glm::mat4 toWorld;
-glm::mat4 c_inverse;
-glm::mat4 projection;
-glm::mat4 viewport;
-
-float angle;
-float orbitAngle;
-float pointSize;
+OBJObject rastObject("bunny.obj");
 
 using namespace std;
 
@@ -35,51 +16,6 @@ struct Color    // generic color class
 {
 	float r, g, b;  // red, green, blue
 };
-
-glm::mat4 getWorld() {
-	return toWorld;
-}
-glm::mat4 getCamera() {
-	return c_inverse;
-}
-glm::mat4 getProjection() {
-	return projection;
-}
-glm::mat4 getViewport() {
-	return viewport;
-}
-
-void parse(const char *filepath) {
-	std::FILE * objFile = fopen( filepath, "r");
-	if (objFile == NULL) return;
-	//Read the file until the end; "# are commments to be ignored".
-	while (1) {
-		char buf[BUFSIZ];
-		int check = fscanf(objFile, "%s", buf);
-		if (check == EOF) break;
-		//Read in lines that start with "v". Add into vertices.
-		if (strcmp(buf, "v") == 0) {
-			glm::vec3 vertex;
-			fscanf(objFile, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			//fscanf(objFile, "%f %f %f\n", ...colors...);//Colors?
-			vertices.push_back(vertex);
-
-		}
-		//Read in lines that start with "vn". Add into normals.
-		if (strcmp(buf, "vn") == 0) {
-			glm::vec3 normalVertex;
-			fscanf(objFile, "%f %f %f\n", &normalVertex.x, &normalVertex.y, &normalVertex.z);
-			normals.push_back(normalVertex);
-		}
-		//Read in lines that start with "f". Add into faces.
-	}
-	fclose(objFile);
-}
-
-void loadData()
-{
-	parse("bunny.obj");
-}
 
 // Clear frame buffer to the color black (0.0, 0.0, 0.0)
 void clearBuffer()
@@ -102,132 +38,10 @@ void drawPoint(int x, int y, float r, float g, float b)
 	pixels[offset + 2] = b;
 }
 
-void spin(float deg)
-{
-	toWorld *= glm::rotate(glm::mat4(SPIN_STEP), 1.0f / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
-}
-
-void update()
-{
-	angle += SPIN_STEP;//Current Spin Angle.
-	if (angle > 360.0f || angle < -360.0f) angle = 0.0f;
-	//Spins.
-	spin(angle);
-}
-
-void pointUp()
-{
-	printf("Rasterizer: P\n");
-}
-void pointDown()
-{
-	printf("Rasterizer: p\n");
-}
-
-void left()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(-MOVE_STEP, 0.0f, 0.0f));
-	toWorld *= translateInverse;
-}
-
-void right()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(MOVE_STEP, 0.0f, 0.0f));
-	toWorld *= translateInverse;
-}
-
-void up()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, MOVE_STEP, 0.0f));
-	toWorld *= translateInverse;
-}
-
-void down()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -MOVE_STEP, 0.0f));
-	toWorld *= translateInverse;
-}
-
-void in()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -MOVE_STEP));
-	toWorld *= translateInverse;
-}
-
-void out()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	toWorld *= translate;
-	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, MOVE_STEP));
-	toWorld *= translateInverse;
-}
-
-void scaleUp()
-{
-	//Scale by World.
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
-	toWorld *= scaleMatrix;
-}
-
-void scaleDown()
-{
-	//Scale by World.
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-	toWorld *= scaleMatrix;
-}
-
-void orbitCW()
-{
-	printf("Rasterizer: O\n");
-}
-void orbitCCW()
-{
-	printf("Rasterizer: o\n");
-}
-void reset()
-{
-	printf("Rasterizer: r\n");
-}
-
 void rasterize()//Basically a new draw function.
 {
-	// Put your main rasterization loop here
-	// It should go over the point model and call drawPoint for every point in it
-	//update();
+	std::vector<glm::vec3> vertices = rastObject.getVertices();
+	std::vector<glm::vec3> normals = rastObject.getNormals();
 
 	for (int i = 0; i < vertices.size(); ++i)
 	{
@@ -253,32 +67,24 @@ void rasterize()//Basically a new draw function.
 
 		//p' = p
 		glm::vec4 point = glm::vec4(vertices[i].x, vertices[i].y, vertices[i].z, 1);
-		if (DEBUG) printf("%f, %f, %f\n", point.x, point.y, point.z);
 
 		//p' = M * p
-		glm::mat4 world = getWorld();
-		point = world * point;
-		if (DEBUG) printf("%f, %f, %f\n", point.x, point.y, point.z);
+		glm::mat4 world = rastObject.getWorld();
 
 		//p' = C^(-1) * M * p
-		glm::mat4 camera = getCamera();
-		point = camera * point;
-		if (DEBUG) printf("%f, %f, %f\n", point.x, point.y, point.z);
+		glm::mat4 camera = rastObject.getCamera();
 
 		//p' = P * C^(-1) * M * p
-		glm::mat4 projection = getProjection();
-		point = projection * point;
-		if (DEBUG) printf("%f, %f, %f\n", point.x, point.y, point.z);
+		glm::mat4 projection = rastObject.getProjection();
+		point = projection * camera * world * point;
 
 		//p' = D * P * C^(-1) * M * p
-		glm::mat4 viewport = getViewport();
+		glm::mat4 viewport = rastObject.getViewport();
 		point = point*viewport;
-		if (DEBUG) printf("%f, %f, %f\n", point.x, point.y, point.z);
-
+		
 		int dx = (int)(point.x/point.w);
 		int dy = (int)(point.y/point.w);
 
-		if (DEBUG) printf("%d, %d \n", dx, dy);
 		
 		if (dx >= 0 && dx < window_width && dy >= 0 && dy < window_height)
 		{
@@ -313,29 +119,29 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	int pKey = glfwGetKey(window, GLFW_KEY_P);
 
 	//Callback for 'x'/'X': move left/right by a small amount.
-	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) pointUp();
-	else if (pKey == GLFW_PRESS) pointDown();
+	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.pointUp();
+	else if (pKey == GLFW_PRESS) rastObject.pointDown();
 
 	//Callback for 'x'/'X': move left/right by a small amount.
-	if (xKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) right();
-	else if (xKey == GLFW_PRESS) left();
+	if (xKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.right();
+	else if (xKey == GLFW_PRESS) rastObject.left();
 
 	//Callback for 'y'/'Y': move down/up by a small amount.
-	if (yKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) up();
-	else if (yKey == GLFW_PRESS) down();
+	if (yKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.up();
+	else if (yKey == GLFW_PRESS) rastObject.down();
 
 	//Callback for 'z'/'Z': move into/out of the screen by a small amount.
-	if (zKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) out();
-	else if (zKey == GLFW_PRESS) in();
+	if (zKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.out();
+	else if (zKey == GLFW_PRESS) rastObject.in();
 
 	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
-	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) scaleUp();
-	else if (sKey == GLFW_PRESS) scaleDown();
+	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.scaleUp();
+	else if (sKey == GLFW_PRESS) rastObject.scaleDown();
 
 	//Callback for 'o'/'O': orbit the model about the window's z axis by a small number of degrees per key press,  
 	//counterclockwise ('o') or clockwise ('O'). The z axis crosses the screen in the center of the window.
-	if (oKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) orbitCW();
-	else if (oKey == GLFW_PRESS) orbitCCW();
+	if (oKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) rastObject.orbitCW();
+	else if (oKey == GLFW_PRESS) rastObject.orbitCCW();
 
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
@@ -349,22 +155,22 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		//Callback for F1
 		if (key == GLFW_KEY_F1)
 		{
-			//object = objf1;//Load the first model
+			//rastObject = objf1;//Load the first model
 		}
 		//Callback for F2
 		if (key == GLFW_KEY_F2)
 		{
-			//object = objf2;//Load the second model
+			//rastObject = objf2;//Load the second model
 		}
 		//Callback for F3
 		if (key == GLFW_KEY_F3)
 		{
-			//object = objf3;//Load the third model
+			//rastObject = objf3;//Load the third model
 		}
 		//Callback for 'r': reset position, orientation and size.
 		if (key == GLFW_KEY_R)
 		{
-			reset();//Reset the model
+			rastObject.reset();//Reset the model
 		}
 	}
 }
@@ -389,48 +195,12 @@ void errorCallback(int error, const char* description)
 	fputs(description, stderr);
 }
 
-int main2(int argc, char** argv) {
-
-	//Initialize all matrices and local variables.
-	angle = 0.0f;
-	orbitAngle = 0.0f;
-	pointSize = 1.0f;
-
-	//toWorld Matrix
-	toWorld = glm::mat4(1.0f);
-
-	//C_inverse Matrix
-	glm::vec3 e = glm::vec3(0.0f, 0.0f, 20.0f);
-	glm::vec3 d = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-	c_inverse = glm::lookAt(e, d, up);
-	/*
-	printf("c_inverse:\n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n", 
-		c_inverse[0][0], c_inverse[1][0], c_inverse[2][0], c_inverse[3][0], 
-		c_inverse[0][1], c_inverse[1][1], c_inverse[2][1], c_inverse[3][1], 
-		c_inverse[0][2], c_inverse[1][2], c_inverse[2][2], c_inverse[3][2], 
-		c_inverse[0][3], c_inverse[1][3], c_inverse[2][3], c_inverse[3][3]);
-	*/
+int main(int argc, char** argv) {
 
 	//Projection Matrix
-	projection = glm::perspective(glm::radians(60.0f), (float)window_width / (float)window_height, 1.0f, 1000.0f);
-	/*
-	printf("projection:\n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n %f, %f, %f, %f \n",
-		projection[0][0], projection[1][0], projection[2][0], projection[3][0],
-		projection[0][1], projection[1][1], projection[2][1], projection[3][1],
-		projection[0][2], projection[1][2], projection[2][2], projection[3][2],
-		projection[0][3], projection[1][3], projection[2][3], projection[3][3]);
-	*/
-
+	rastObject.setProjection((float)window_width, (float)window_height);
 	//Viewport Matrix
-	float viewportX = (window_width - 0.0f) * (0.5f);
-	float viewportY = (window_height - 0.0f) * (0.5f);
-	float viewportX2 = (window_width + 0.0f) * (0.5f);
-	float viewportY2 = (window_height + 0.0f) * (0.5f);
-	viewport = glm::mat4(viewportX, 0.0f, 0.0f, viewportX2,
-		0.0f, viewportY, 0.0f, viewportY2,
-		0.0f, 0.0f, 0.5f, 0.5f,
-		0.0f, 0.0f, 0.0f, 1.0f);
+	rastObject.setViewport((float)window_width, (float)window_height);
 
 	// Initialize GLFW
 	if (!glfwInit())
