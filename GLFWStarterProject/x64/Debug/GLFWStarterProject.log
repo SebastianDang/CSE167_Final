@@ -1,3 +1,6 @@
-﻿  Rasterizer.cpp
+﻿  main.cpp
+  Rasterizer.cpp
+  OBJObject.cpp
+  Generating Code...
   GLFWStarterProject.vcxproj -> C:\Users\Me\Documents\GitHub\Computer-Graphics\x64\Debug\GLFWStarterProject.exe
   GLFWStarterProject.vcxproj -> C:\Users\Me\Documents\GitHub\Computer-Graphics\x64\Debug\GLFWStarterProject.pdb (Partial PDB)

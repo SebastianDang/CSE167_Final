@@ -55,8 +55,6 @@ void OBJObject::draw()
 	//Push a save state onto the matrix stack, and multiply in the toWorld matrix
 	glPushMatrix();
 	glMultMatrixf(&(toWorld[0][0]));
-	//Update the Object for Rendering.
-	update();
 
 	glBegin(GL_POINTS);
 	// Loop through all the vertices of this OBJ Object and render them

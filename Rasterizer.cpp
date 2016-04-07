@@ -389,7 +389,7 @@ void errorCallback(int error, const char* description)
 	fputs(description, stderr);
 }
 
-int main(int argc, char** argv) {
+int main2(int argc, char** argv) {
 
 	//Initialize all matrices and local variables.
 	angle = 0.0f;
