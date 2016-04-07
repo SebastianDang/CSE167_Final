@@ -28,6 +28,7 @@
     <ClCompile Include="..\Cube.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\OBJObject.cpp" />
+    <ClCompile Include="..\Rasterizer.cpp" />
     <ClCompile Include="..\Window.cpp" />
   </ItemGroup>
   <ItemGroup>

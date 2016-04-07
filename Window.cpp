@@ -4,7 +4,7 @@ const char* window_title = "GLFW Starter Project";
 int Window::width;
 int Window::height;
 
-OBJObject object("");
+OBJObject object("test.obj");
 OBJObject objf1("bunny.obj");
 OBJObject objf2("abear.obj");
 OBJObject objf3("adragon.obj");
@@ -143,29 +143,22 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		//Callback for F1
 		if (key == GLFW_KEY_F1)
 		{
-			//Load the first model
-			printf("F1\n");
-			object = objf1;
+			object = objf1;//Load the first model
 		}
 		//Callback for F2
 		if (key == GLFW_KEY_F2)
 		{
-			//Load the second model
-			printf("F2\n");
-			object = objf2;
+			object = objf2;//Load the second model
 		}
 		//Callback for F3
 		if (key == GLFW_KEY_F3)
 		{
-			//Load the third model
-			printf("F3\n");
-			object = objf3;
+			object = objf3;//Load the third model
 		}
 		//Callback for 'r': reset position, orientation and size.
 		if (key == GLFW_KEY_R) 
 		{
-			//Reset the model
-			object.reset();
+			object.reset();//Reset the model
 		}
 	}
 }

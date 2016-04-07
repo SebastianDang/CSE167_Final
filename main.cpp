@@ -81,7 +81,7 @@ void print_versions()
 #endif
 }
 
-int main(void)
+int main2(void)
 {
 	// Create the GLFW window
 	window = Window::create_window(640, 480);

@@ -98,7 +98,7 @@ void OBJObject::update()
 
 void OBJObject::spin(float deg)
 {
-	this->toWorld *= glm::rotate(glm::mat4(1.0f), 1.0f / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
+	this->toWorld *= glm::rotate(glm::mat4(SPIN_STEP), 1.0f / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 void OBJObject::pointUp() {
