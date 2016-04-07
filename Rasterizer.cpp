@@ -123,38 +123,93 @@ void pointDown()
 {
 	printf("Rasterizer: p\n");
 }
+
 void left()
 {
-	printf("Rasterizer: x\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(-MOVE_STEP, 0.0f, 0.0f));
+	toWorld *= translateInverse;
 }
+
 void right()
 {
-	printf("Rasterizer: X\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(MOVE_STEP, 0.0f, 0.0f));
+	toWorld *= translateInverse;
 }
+
 void up()
 {
-	printf("Rasterizer: Y\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, MOVE_STEP, 0.0f));
+	toWorld *= translateInverse;
 }
+
 void down()
 {
-	printf("Rasterizer: y\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -MOVE_STEP, 0.0f));
+	toWorld *= translateInverse;
 }
+
 void in()
 {
-	printf("Rasterizer: z\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -MOVE_STEP));
+	toWorld *= translateInverse;
 }
+
 void out()
 {
-	printf("Rasterizer: Z\n");
+	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
+	glm::vec3 originVec3 = glm::vec3(originVec4);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 translateInverse = glm::inverse(translate);
+
+	toWorld *= translate;
+	toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, MOVE_STEP));
+	toWorld *= translateInverse;
 }
+
 void scaleUp()
 {
-	printf("Rasterizer: S\n");
+	//Scale by World.
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+	toWorld *= scaleMatrix;
 }
+
 void scaleDown()
 {
-	printf("Rasterizer: s\n");
+	//Scale by World.
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+	toWorld *= scaleMatrix;
 }
+
 void orbitCW()
 {
 	printf("Rasterizer: O\n");
