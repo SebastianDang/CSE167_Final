@@ -7,9 +7,9 @@ const char* window_title = "GLFW Starter Project";
 int Window::width;
 int Window::height;
 static float* pixels = new float[Window::width * Window::height * 3];
-int mode = MODE_RASTERIZER;
+int mode = MODE_OPENGL;
 
-OBJObject object("bunny.obj");
+OBJObject object("test.obj");
 OBJObject objf1("bunny.obj");
 OBJObject objf2("abear.obj");
 OBJObject objf3("adragon.obj");
@@ -224,7 +224,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	int oKey = glfwGetKey(window, GLFW_KEY_O);
 	int pKey = glfwGetKey(window, GLFW_KEY_P);
 
-	//Callback for 'x'/'X': move left/right by a small amount.
+	//Callback for 'p'/'P': adjust point size by a small amount.
 	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS))
 	{
 		if (mode == MODE_OPENGL)
@@ -234,7 +234,6 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		else if (mode == MODE_RASTERIZER) {
 			//pointUp();
 		}
-
 	}
 	else if (pKey == GLFW_PRESS) 
 	{
@@ -245,7 +244,6 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		else if (mode == MODE_RASTERIZER) {
 			//pointDown();
 		}
-
 	}
 
 	//Callback for 'x'/'X': move left/right by a small amount.
@@ -301,6 +299,40 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		{
 			object.reset();//Reset the model
 			Window::initialize_objects();
+		}
+		if (key == GLFW_KEY_T)
+		{
+			if (mode == MODE_RASTERIZER) {
+				// Clear buffer
+				clearBuffer();
+				// Set the viewport size
+				glViewport(0, 0, width, height);
+				// Set the matrix mode to GL_PROJECTION to determine the proper camera properties
+				glMatrixMode(GL_PROJECTION);
+				// Load the identity matrix
+				glLoadIdentity();
+				// Set the perspective of the projection viewing frustum
+				gluPerspective(60.0, double(width) / (double)height, 1.0, 1000.0);
+				// Move camera back 20 units so that it looks at the origin (or else it's in the origin)
+				glTranslatef(0, 0, -20);
+				mode = MODE_OPENGL;
+			}
+			else if (mode == MODE_OPENGL) {
+				// Clear the color and depth buffers
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				// Set the matrix mode to GL_MODELVIEW
+				glMatrixMode(GL_MODELVIEW);
+				// Load the identity matrix
+				glLoadIdentity();
+				//Projection Matrix
+				object.setProjection((float)Window::width, (float)Window::height);
+				//Viewport Matrix
+				object.setViewport((float)Window::width, (float)Window::height);
+				//Clear pixels
+				delete[] pixels;
+				pixels = new float[Window::width * Window::height * 3];
+				mode = MODE_RASTERIZER;
+			}
 		}
 	}
 }
