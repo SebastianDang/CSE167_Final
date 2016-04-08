@@ -53,6 +53,10 @@ glm::mat4 OBJObject::getViewport()
 	return this->viewport;
 }
 
+float OBJObject::getPointSize() {
+	return this->pointSize;
+}
+
 void OBJObject::setWorld()
 {
 	this->toWorld = glm::mat4(1.0f);

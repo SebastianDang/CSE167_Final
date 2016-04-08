@@ -36,6 +36,7 @@ public:
 	float angle;
 	float orbitAngle;
 	float pointSize;
+	float getPointSize();
 
 	void parse(const char* filepath);
 	void draw();

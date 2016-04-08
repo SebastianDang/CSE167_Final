@@ -7,7 +7,8 @@ const char* window_title = "GLFW Starter Project";
 int Window::width;
 int Window::height;
 static float* pixels = new float[Window::width * Window::height * 3];
-int mode = MODE_OPENGL;
+
+int mode = MODE_RASTERIZER;
 
 OBJObject object("test.obj");
 OBJObject objf1("bunny.obj");
@@ -43,11 +44,13 @@ void drawPoint(int x, int y, float r, float g, float b)
 	pixels[offset + 2] = b;
 }
 
-// Rasterize an object (Rendering without OpenGL)
-void rasterize()//Basically a new draw function.
+// Rasterize an object (Rendering without OpenGL). Basically a new draw function.
+void rasterize()
 {
 	std::vector<glm::vec3> vertices = object.getVertices();
 	std::vector<glm::vec3> normals = object.getNormals();
+
+	float pointSize = object.getPointSize();
 
 	for (int i = 0; i < vertices.size(); ++i)
 	{
@@ -91,10 +94,21 @@ void rasterize()//Basically a new draw function.
 		int dx = (int)(point.x / point.w);
 		int dy = (int)(point.y / point.w);
 
-		if (dx >= 0 && dx < Window::width && dy >= 0 && dy < Window::height)
-		{
-			drawPoint(dx, dy, objColor.r, objColor.g, objColor.b);
+		//Adjust pixel size.
+		if (pointSize <= 1) { pointSize = 1; }
+		int pixelWidth = (int)dx + pointSize;
+		int pixelHeight = (int)dy + pointSize;
+
+		//Plot the point in 2D
+		for (int x = dx; x < pixelWidth; ++x) {
+			for (int y = dy; y < pixelHeight; ++y) {
+				if (x >= 0 && x < Window::width && y >= 0 && y < Window::height)
+				{
+					drawPoint(x, y, objColor.r, objColor.g, objColor.b);
+				}
+			}
 		}
+		
 	}
 }
 
@@ -117,7 +131,6 @@ void Window::clean_up()
 
 GLFWwindow* Window::create_window(int width, int height)
 {
-
 	// Initialize GLFW
 	if (!glfwInit())
 	{
@@ -225,26 +238,8 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	int pKey = glfwGetKey(window, GLFW_KEY_P);
 
 	//Callback for 'p'/'P': adjust point size by a small amount.
-	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS))
-	{
-		if (mode == MODE_OPENGL)
-		{
-			object.pointUp();
-		}
-		else if (mode == MODE_RASTERIZER) {
-			//pointUp();
-		}
-	}
-	else if (pKey == GLFW_PRESS) 
-	{
-		if (mode == MODE_OPENGL)
-		{
-			object.pointDown();
-		}
-		else if (mode == MODE_RASTERIZER) {
-			//pointDown();
-		}
-	}
+	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.pointUp();
+	else if (pKey == GLFW_PRESS) object.pointDown();
 
 	//Callback for 'x'/'X': move left/right by a small amount.
 	if (xKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.right();
