@@ -6,14 +6,15 @@
 const char* window_title = "GLFW Starter Project";
 int Window::width;
 int Window::height;
+
 static float* pixels = new float[Window::width * Window::height * 3];
 
-int mode = MODE_RASTERIZER;
+int mode = MODE_OPENGL;
 
-OBJObject object("test.obj");
+OBJObject object("");
 OBJObject objf1("bunny.obj");
-OBJObject objf2("abear.obj");
-OBJObject objf3("adragon.obj");
+OBJObject objf2("bear.obj");
+OBJObject objf3("dragon.obj");
 
 using namespace std;
 
@@ -96,8 +97,8 @@ void rasterize()
 
 		//Adjust pixel size.
 		if (pointSize <= 1) { pointSize = 1; }
-		int pixelWidth = (int)dx + pointSize;
-		int pixelHeight = (int)dy + pointSize;
+		int pixelWidth = (int)(dx + pointSize);
+		int pixelHeight = (int)(dy + pointSize);
 
 		//Plot the point in 2D
 		for (int x = dx; x < pixelWidth; ++x) {

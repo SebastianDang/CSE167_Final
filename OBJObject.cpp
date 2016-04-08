@@ -25,11 +25,17 @@ OBJObject::OBJObject(const char *filepath)
 
 std::vector<glm::vec3> OBJObject::getVertices()
 {
+	if (this->vertices.size() == 0) {
+		this->vertices.push_back(glm::vec3(0.0f));
+	}
 	return this->vertices;
 }
 
 std::vector<glm::vec3> OBJObject::getNormals()
 {
+	if (this->normals.size() == 0) {
+		this->normals.push_back(glm::vec3(0.0f));
+	}
 	return this->normals;
 }
 
