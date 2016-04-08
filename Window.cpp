@@ -13,8 +13,8 @@ int mode = MODE_OPENGL;
 
 OBJObject object("");
 OBJObject objf1("bunny.obj");
-OBJObject objf2("abear.obj");
-OBJObject objf3("adragon.obj");
+OBJObject objf2("bear.obj");
+OBJObject objf3("dragon.obj");
 
 using namespace std;
 
