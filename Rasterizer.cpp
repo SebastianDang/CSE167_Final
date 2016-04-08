@@ -85,6 +85,7 @@ void rasterize()//Basically a new draw function.
 		int dx = (int)(point.x/point.w);
 		int dy = (int)(point.y/point.w);
 
+
 		
 		if (dx >= 0 && dx < window_width && dy >= 0 && dy < window_height)
 		{
@@ -195,7 +196,7 @@ void errorCallback(int error, const char* description)
 	fputs(description, stderr);
 }
 
-int main(int argc, char** argv) {
+int main2(int argc, char** argv) {
 
 	//Projection Matrix
 	rastObject.setProjection((float)window_width, (float)window_height);
@@ -228,9 +229,6 @@ int main(int argc, char** argv) {
 
 	// Set swap interval to 1
 	glfwSwapInterval(1);
-	
-	//Load the data.
-	loadData();
 
 	// Set the error callback
 	glfwSetErrorCallback(errorCallback);
