@@ -3,7 +3,7 @@
 #define MODE_OPENGL 0
 #define MODE_RASTERIZER 1
 
-const char* window_title = "GLFW Starter Project";
+const char* window_title = "CSE 167 Homework 1";
 int Window::width;
 int Window::height;
 
@@ -13,21 +13,21 @@ int mode = MODE_OPENGL;
 
 OBJObject object("");
 OBJObject objf1("bunny.obj");
-OBJObject objf2("bear.obj");
-OBJObject objf3("dragon.obj");
+OBJObject objf2("abear.obj");
+OBJObject objf3("adragon.obj");
 
 using namespace std;
 
 /* Rasterizer Section */
-struct Color    // generic color class
+struct Color//generic color class
 {
-	float r, g, b;  // red, green, blue
+	float r, g, b;
 };
 
-// Clear frame buffer to the color black (0.0, 0.0, 0.0)
+//Clear frame buffer to the color black (0.0, 0.0, 0.0)
 void clearBuffer()
 {
-	Color clearColor = { 0.0, 0.0, 0.0 };   // clear color: black
+	Color clearColor = { 0.0, 0.0, 0.0 };//clearColor: black
 	for (int i = 0; i<Window::width*Window::height; ++i)
 	{
 		pixels[i * 3] = clearColor.r;
@@ -36,7 +36,7 @@ void clearBuffer()
 	}
 }
 
-// Draw a point into the frame buffer (x,y) (r,g,b)
+//Draw a point into the frame buffer (x,y) (r,g,b)
 void drawPoint(int x, int y, float r, float g, float b)
 {
 	int offset = y*Window::width * 3 + x * 3;
@@ -45,7 +45,7 @@ void drawPoint(int x, int y, float r, float g, float b)
 	pixels[offset + 2] = b;
 }
 
-// Rasterize an object (Rendering without OpenGL). Basically a new draw function.
+//Rasterize an object (Rendering without OpenGL). Basically a new draw function.
 void rasterize()
 {
 	std::vector<glm::vec3> vertices = object.getVertices();
@@ -103,8 +103,7 @@ void rasterize()
 		//Plot the point in 2D
 		for (int x = dx; x < pixelWidth; ++x) {
 			for (int y = dy; y < pixelHeight; ++y) {
-				if (x >= 0 && x < Window::width && y >= 0 && y < Window::height)
-				{
+				if (x >= 0 && x < Window::width && y >= 0 && y < Window::height){
 					drawPoint(x, y, objColor.r, objColor.g, objColor.b);
 				}
 			}
@@ -132,20 +131,20 @@ void Window::clean_up()
 
 GLFWwindow* Window::create_window(int width, int height)
 {
-	// Initialize GLFW
+	//Initialize GLFW
 	if (!glfwInit())
 	{
 		fprintf(stderr, "Failed to initialize GLFW\n");
 		return NULL;
 	}
 
-	// 4x antialiasing
+	//4x antialiasing
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	// Create the GLFW window
+	//Create the GLFW window
 	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
 
-	// Check if the window could not be created
+	//Check if the window could not be created
 	if (!window)
 	{
 		fprintf(stderr, "Failed to open GLFW window.\n");
@@ -153,13 +152,13 @@ GLFWwindow* Window::create_window(int width, int height)
 		return NULL;
 	}
 
-	// Make the context of the window
+	//Make the context of the window
 	glfwMakeContextCurrent(window);
 
-	// Set swap interval to 1
+	//Set swap interval to 1
 	glfwSwapInterval(1);
 
-	// Call the resize to make sure things get drawn immediately
+	//Call the resize to make sure things get drawn immediately
 	Window::resize_callback(window, width, height);
 
 	return window;
@@ -169,6 +168,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 {
 	Window::width = width;
 	Window::height = height;
+
 	if (mode == MODE_OPENGL) {
 		// Set the viewport size
 		glViewport(0, 0, width, height);
@@ -194,7 +194,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 
 void Window::idle_callback()
 {
-	// Perform any updates as necessary. Here, we will spin the cube slightly.
+	//Perform any updates as necessary.
 	object.update();
 }
 
@@ -259,7 +259,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	else if (sKey == GLFW_PRESS) object.scaleDown();
 	
 	//Callback for 'o'/'O': orbit the model about the window's z axis by a small number of degrees per key press,  
-	//counterclockwise ('o') or clockwise ('O'). The z axis crosses the screen in the center of the window.
+	//Counterclockwise ('o') or clockwise ('O'). The z axis crosses the screen in the center of the window.
 	if (oKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.orbitCW();
 	else if (oKey == GLFW_PRESS) object.orbitCCW();
 
