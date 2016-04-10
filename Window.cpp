@@ -1,150 +1,54 @@
-#include "Window.h"
+#include "window.h"
 
-#define MODE_OPENGL 0
-#define MODE_RASTERIZER 1
+const char* window_title = "GLFW Starter Project";
+Cube * cube;
+GLint shaderProgram;
 
-const char* window_title = "CSE 167 Homework 1";
+// Default camera parameters
+glm::vec3 cam_pos(0.0f, 0.0f, 20.0f);		// e  | Position of camera
+glm::vec3 cam_look_at(0.0f, 0.0f, 0.0f);	// d  | This is where the camera looks at
+glm::vec3 cam_up(0.0f, 1.0f, 0.0f);			// up | What orientation "up" is
+
 int Window::width;
 int Window::height;
 
-static float* pixels = new float[Window::width * Window::height * 3];
+glm::mat4 Window::P;
+glm::mat4 Window::V;
 
-int mode = MODE_OPENGL;
-
-OBJObject object("");
-OBJObject objf1("bunny.obj");
-OBJObject objf2("bear.obj");
-OBJObject objf3("dragon.obj");
-
-using namespace std;
-
-/* Rasterizer Section */
-struct Color//generic color class
-{
-	float r, g, b;
-};
-
-//Clear frame buffer to the color black (0.0, 0.0, 0.0)
-void clearBuffer()
-{
-	Color clearColor = { 0.0, 0.0, 0.0 };//clearColor: black
-	for (int i = 0; i<Window::width*Window::height; ++i)
-	{
-		pixels[i * 3] = clearColor.r;
-		pixels[i * 3 + 1] = clearColor.g;
-		pixels[i * 3 + 2] = clearColor.b;
-	}
-}
-
-//Draw a point into the frame buffer (x,y) (r,g,b)
-void drawPoint(int x, int y, float r, float g, float b)
-{
-	int offset = y*Window::width * 3 + x * 3;
-	pixels[offset] = r;
-	pixels[offset + 1] = g;
-	pixels[offset + 2] = b;
-}
-
-//Rasterize an object (Rendering without OpenGL). Basically a new draw function.
-void rasterize()
-{
-	std::vector<glm::vec3> vertices = object.getVertices();
-	std::vector<glm::vec3> normals = object.getNormals();
-
-	float pointSize = object.getPointSize();
-
-	for (int i = 0; i < vertices.size(); ++i)
-	{
-		//Set color of the pixel
-		Color objColor;
-		glm::vec3 normalized = glm::normalize(normals[i]);//Normalize for the colors.
-		float red = normalized.x;
-		float green = normalized.y;
-		float blue = normalized.z;
-
-		if (red < 0.0f) { red = 0.0f + (-0.5f)*red; }
-		else red = 0.0f + (0.5f)*red;
-
-		if (green < 0.0f) { green = 0.0f + (-0.5f)*green; }
-		else green = 0.0f + (0.5f)*green;
-
-		if (blue < 0.0f) { blue = 0.0f + (-0.5f)*blue; }
-		else blue = 0.0f + (0.5f)*blue;
-
-		objColor.r = red;
-		objColor.g = green;
-		objColor.b = blue;
-
-		//p' = p
-		glm::vec4 point = glm::vec4(vertices[i].x, vertices[i].y, vertices[i].z, 1);
-
-		//p' = M * p
-		glm::mat4 world = object.getWorld();
-
-		//p' = C^(-1) * M * p
-		glm::mat4 camera = object.getCamera();
-
-		//p' = P * C^(-1) * M * p
-		glm::mat4 projection = object.getProjection();
-		point = projection * camera * world * point;
-
-		//p' = D * P * C^(-1) * M * p
-		glm::mat4 viewport = object.getViewport();
-		point = point*viewport;
-
-		int dx = (int)(point.x / point.w);
-		int dy = (int)(point.y / point.w);
-
-		//Adjust pixel size.
-		if (pointSize <= 1) { pointSize = 1; }
-		int pixelWidth = (int)(dx + pointSize);
-		int pixelHeight = (int)(dy + pointSize);
-
-		//Plot the point in 2D
-		for (int x = dx; x < pixelWidth; ++x) {
-			for (int y = dy; y < pixelHeight; ++y) {
-				if (x >= 0 && x < Window::width && y >= 0 && y < Window::height){
-					drawPoint(x, y, objColor.r, objColor.g, objColor.b);
-				}
-			}
-		}
-		
-	}
-}
-
-/* OpenGL Section */
 void Window::initialize_objects()
 {
-	//toWorld Matrix
-	object.setWorld();
-	//C_inverse Matrix
-	object.setCamera();
-	//Projection Matrix
-	object.setProjection((float)Window::width, (float)Window::height);
-	//Viewport Matrix
-	object.setViewport((float)Window::width, (float)Window::height);
+	cube = new Cube();
+
+	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
+#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
+	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
+#else // Not windows
+	shaderProgram = LoadShaders("shader.vert", "shader.frag");
+#endif
 }
 
 void Window::clean_up()
 {
+	delete(cube);
+	glDeleteProgram(shaderProgram);
 }
 
 GLFWwindow* Window::create_window(int width, int height)
 {
-	//Initialize GLFW
+	// Initialize GLFW
 	if (!glfwInit())
 	{
 		fprintf(stderr, "Failed to initialize GLFW\n");
 		return NULL;
 	}
 
-	//4x antialiasing
+	// 4x antialiasing
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	//Create the GLFW window
+	// Create the GLFW window
 	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
 
-	//Check if the window could not be created
+	// Check if the window could not be created
 	if (!window)
 	{
 		fprintf(stderr, "Failed to open GLFW window.\n");
@@ -152,13 +56,15 @@ GLFWwindow* Window::create_window(int width, int height)
 		return NULL;
 	}
 
-	//Make the context of the window
+	// Make the context of the window
 	glfwMakeContextCurrent(window);
 
-	//Set swap interval to 1
+	// Set swap interval to 1
 	glfwSwapInterval(1);
 
-	//Call the resize to make sure things get drawn immediately
+	// Get the width and height of the framebuffer to properly resize the window
+	glfwGetFramebufferSize(window, &width, &height);
+	// Call the resize callback to make sure things get drawn immediately
 	Window::resize_callback(window, width, height);
 
 	return window;
@@ -168,56 +74,33 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 {
 	Window::width = width;
 	Window::height = height;
+	// Set the viewport size
+	glViewport(0, 0, width, height);
 
-	if (mode == MODE_OPENGL) {
-		// Set the viewport size
-		glViewport(0, 0, width, height);
-		// Set the matrix mode to GL_PROJECTION to determine the proper camera properties
-		glMatrixMode(GL_PROJECTION);
-		// Load the identity matrix
-		glLoadIdentity();
-		// Set the perspective of the projection viewing frustum
-		gluPerspective(60.0, double(width) / (double)height, 1.0, 1000.0);
-		// Move camera back 20 units so that it looks at the origin (or else it's in the origin)
-		glTranslatef(0, 0, -20);
-	}
-	if (mode == MODE_RASTERIZER) {
-		//Projection Matrix
-		object.setProjection((float)Window::width, (float)Window::height);
-		//Viewport Matrix
-		object.setViewport((float)Window::width, (float)Window::height);
-		//Clear pixels
-		delete[] pixels;
-		pixels = new float[Window::width * Window::height * 3];
+	if (height > 0)
+	{
+		P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+		V = glm::lookAt(cam_pos, cam_look_at, cam_up);
 	}
 }
 
 void Window::idle_callback()
 {
-	//Perform any updates as necessary.
-	object.update();
+	// Call the update function the cube
+	cube->update();
 }
 
 void Window::display_callback(GLFWwindow* window)
 {
-	if (mode == MODE_OPENGL) {
-		// Clear the color and depth buffers
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// Set the matrix mode to GL_MODELVIEW
-		glMatrixMode(GL_MODELVIEW);
-		// Load the identity matrix
-		glLoadIdentity();
-		// Render objects
-		object.draw();
-	}
-	if (mode == MODE_RASTERIZER) {
-		// Clear buffer
-		clearBuffer();
-		// Render objects
-		rasterize();
-		// glDrawPixels writes a block of pixels to the framebuffer
-		glDrawPixels(Window::width, Window::height, GL_RGB, GL_FLOAT, pixels);
-	}
+	// Clear the color and depth buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Use the shader of programID
+	glUseProgram(shaderProgram);
+	
+	// Render the cube
+	cube->draw(shaderProgram);
+
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 	// Swap buffers
@@ -226,44 +109,7 @@ void Window::display_callback(GLFWwindow* window)
 
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	//Define shift keys for capital letters
-	int Lshift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
-	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
-
-	//Define x, y, z, s, o keys
-	int xKey = glfwGetKey(window, GLFW_KEY_X);
-	int yKey = glfwGetKey(window, GLFW_KEY_Y);
-	int zKey = glfwGetKey(window, GLFW_KEY_Z);
-	int sKey = glfwGetKey(window, GLFW_KEY_S);
-	int oKey = glfwGetKey(window, GLFW_KEY_O);
-	int pKey = glfwGetKey(window, GLFW_KEY_P);
-
-	//Callback for 'p'/'P': adjust point size by a small amount.
-	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.pointUp();
-	else if (pKey == GLFW_PRESS) object.pointDown();
-
-	//Callback for 'x'/'X': move left/right by a small amount.
-	if (xKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.right();
-	else if (xKey == GLFW_PRESS) object.left();
-	
-	//Callback for 'y'/'Y': move down/up by a small amount.
-	if (yKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.up();
-	else if (yKey == GLFW_PRESS) object.down();
-	
-	//Callback for 'z'/'Z': move into/out of the screen by a small amount.
-	if (zKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.out();
-	else if (zKey == GLFW_PRESS) object.in();
-	
-	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
-	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.scaleUp();
-	else if (sKey == GLFW_PRESS) object.scaleDown();
-	
-	//Callback for 'o'/'O': orbit the model about the window's z axis by a small number of degrees per key press,  
-	//Counterclockwise ('o') or clockwise ('O'). The z axis crosses the screen in the center of the window.
-	if (oKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object.orbitCW();
-	else if (oKey == GLFW_PRESS) object.orbitCCW();
-
-	//Check for a single key press (Not holds)
+	// Check for a key press
 	if (action == GLFW_PRESS)
 	{
 		// Check if escape was pressed
@@ -271,64 +117,6 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		{
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
-		}
-		//Callback for F1
-		if (key == GLFW_KEY_F1)
-		{
-			object = objf1;//Load the first model
-			Window::initialize_objects();
-		}
-		//Callback for F2
-		if (key == GLFW_KEY_F2)
-		{
-			object = objf2;//Load the second model
-			Window::initialize_objects();
-		}
-		//Callback for F3
-		if (key == GLFW_KEY_F3)
-		{
-			object = objf3;//Load the third model
-			Window::initialize_objects();
-		}
-		//Callback for 'r': reset position, orientation and size.
-		if (key == GLFW_KEY_R) 
-		{
-			object.reset();//Reset the model
-			Window::initialize_objects();
-		}
-		if (key == GLFW_KEY_T)
-		{
-			if (mode == MODE_RASTERIZER) {
-				// Clear buffer
-				clearBuffer();
-				// Set the viewport size
-				glViewport(0, 0, width, height);
-				// Set the matrix mode to GL_PROJECTION to determine the proper camera properties
-				glMatrixMode(GL_PROJECTION);
-				// Load the identity matrix
-				glLoadIdentity();
-				// Set the perspective of the projection viewing frustum
-				gluPerspective(60.0, double(width) / (double)height, 1.0, 1000.0);
-				// Move camera back 20 units so that it looks at the origin (or else it's in the origin)
-				glTranslatef(0, 0, -20);
-				mode = MODE_OPENGL;
-			}
-			else if (mode == MODE_OPENGL) {
-				// Clear the color and depth buffers
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				// Set the matrix mode to GL_MODELVIEW
-				glMatrixMode(GL_MODELVIEW);
-				// Load the identity matrix
-				glLoadIdentity();
-				//Projection Matrix
-				object.setProjection((float)Window::width, (float)Window::height);
-				//Viewport Matrix
-				object.setViewport((float)Window::width, (float)Window::height);
-				//Clear pixels
-				delete[] pixels;
-				pixels = new float[Window::width * Window::height * 3];
-				mode = MODE_RASTERIZER;
-			}
 		}
 	}
 }

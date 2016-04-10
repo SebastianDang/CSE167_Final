@@ -6,13 +6,15 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Cube.h"
-#include "OBJObject.h"
+#include "shader.h"
 
 class Window
 {
 public:
 	static int width;
 	static int height;
+	static glm::mat4 P;
+	static glm::mat4 V;
 	static void initialize_objects();
 	static void clean_up();
 	static GLFWwindow* create_window(int width, int height);

@@ -15,58 +15,37 @@ void setup_callbacks()
 	// Set the key callback
 	glfwSetKeyCallback(window, Window::key_callback);
 	// Set the window resize callback
-	glfwSetWindowSizeCallback(window, Window::resize_callback);
+	glfwSetFramebufferSizeCallback(window, Window::resize_callback);
 }
 
-void setup_materials()
+void setup_glew()
 {
-	float specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	float shininess[] = { 100.0 };
-
-	// Enable color materials
-	glEnable(GL_COLOR_MATERIAL);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-}
-
-void setup_lighting()
-{
-	// Enable lighting
-	glEnable(GL_LIGHTING);
-	// Enable Local Viewer Light Model
-	glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-
-	// Lightsource position
-	float position[] = { 10.0, 10.0, 10.0, 1.0 };
-
-	// Generate light source
-	glLightfv(GL_LIGHT0, GL_POSITION, position);
-	// Enable GL_LIGHT0
-	glEnable(GL_LIGHT0);
+	// Initialize GLEW
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		/* Problem: glewInit failed, something is seriously wrong. */
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		glfwTerminate();
+	}
+	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 }
 
 void setup_opengl_settings()
 {
+	// Setup GLEW
+	setup_glew();
 	// Enable depth buffering
 	glEnable(GL_DEPTH_TEST);
 	// Related to shaders and z value comparisons for the depth buffer
 	glDepthFunc(GL_LEQUAL);
 	// Set polygon drawing mode to fill front and back of each polygon
+	// You can also use the paramter of GL_LINE instead of GL_FILL to see wireframes
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	// Disable backface culling to render both sides of polygons
 	glDisable(GL_CULL_FACE);
-	// Set clear color to black
-	glClearColor(0.0, 0.0, 0.0, 0.0);                           
-	// Set shading to smooth
-	glShadeModel(GL_SMOOTH);                                    
-	// Auto normalize surface normals
-	glEnable(GL_NORMALIZE);
-	
-	// Setup materials
-	setup_materials();
-	// Setup lighting
-	setup_lighting();                                           
+	// Set clear color
+	glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
 }
 
 void print_versions()

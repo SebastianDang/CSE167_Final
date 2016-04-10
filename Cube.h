@@ -3,23 +3,21 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/mat4x4.hpp> // glm::mat4
+#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 
 class Cube
 {
 public:
-	Cube(float);
+	Cube();
 	~Cube();
 
 	glm::mat4 toWorld;
-
-	float size;
+	GLuint VBO, VAO, EBO;
 	float angle;
 
-	void draw();
+	void draw(GLuint);
 	void update();
-
 	void spin(float);
 };
 
