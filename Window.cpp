@@ -1,7 +1,6 @@
 #include "window.h"
 
 const char* window_title = "CSE 167 Homework 2";
-Cube * cube;
 OBJObject * object;
 GLint shaderProgram;
 
@@ -18,7 +17,6 @@ glm::mat4 Window::V;
 
 void Window::initialize_objects()
 {
-	//cube = new Cube();
 	object = new OBJObject("bunny.obj");
 	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
 	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
@@ -30,7 +28,6 @@ void Window::initialize_objects()
 
 void Window::clean_up()
 {
-	//delete(cube);
 	delete(object);
 	glDeleteProgram(shaderProgram);
 }
@@ -88,8 +85,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 
 void Window::idle_callback()
 {
-	// Call the update function the cube
-	//cube->update();
+	object->update();
 }
 
 void Window::display_callback(GLFWwindow* window)

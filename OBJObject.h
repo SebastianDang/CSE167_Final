@@ -14,7 +14,7 @@ struct Vertex {
 	// Normal (Color)
 	glm::vec3 Normal;
 	// TexCoords
-	//glm::vec2 TexCoords;
+	glm::vec2 TexCoords;
 };
 
 struct Texture {

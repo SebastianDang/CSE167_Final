@@ -63,9 +63,6 @@ void OBJObject::parse(const char *filepath)
 			indices.push_back(faces_v[0] - 1);
 			indices.push_back(faces_v[1] - 1);
 			indices.push_back(faces_v[2] - 1);
-			//indices.push_back(faces_vn[0]);
-			//indices.push_back(faces_vn[1]);
-			//indices.push_back(faces_vn[2]);
 			continue;
 		}
 	}
@@ -85,38 +82,30 @@ void OBJObject::setupObject()
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind vertex buffer
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(glm::vec3), &this->vertices[0], GL_STATIC_DRAW); // Set vertex buffer to vertices
-	//glBufferData(GL_ARRAY_BUFFER, this->normals.size() * sizeof(glm::vec3), &this->normals, GL_STATIC_DRAW); // Set vertex buffer to normals
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
 	
-	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
-		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
-		GL_FLOAT, // What type these components are
-		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		3 * sizeof(GLfloat), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
-
-	/*
 	//Vertex Positions
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
 		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
 		GL_FLOAT, // What type these components are
 		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
+	/*
 	//Vertex Normals (Colors / RGB)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
 		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
 		GL_FLOAT, // What type these components are
 		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)offsetof(Vertex, Normal)); // Offset of the first vertex's component.
-
     */
+
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
@@ -137,7 +126,6 @@ void OBJObject::draw(GLuint shaderProgram)
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-	
 }
 
 void OBJObject::draw()
@@ -147,7 +135,6 @@ void OBJObject::draw()
 	glPushMatrix();
 	glMultMatrixf(&(toWorld[0][0]));
 
-	/*
 	glBegin(GL_POINTS);
 	// Loop through all the vertices of this OBJ Object and render them
 	for (unsigned int i = 0; i < vertices.size(); ++i)
@@ -171,8 +158,8 @@ void OBJObject::draw()
 	glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
 	}
 	glEnd();
-	*/
 
+	/*
 	glBegin(GL_TRIANGLES);
 	for (unsigned int i = 0; i < indices.size(); i++)
 	{
@@ -181,6 +168,7 @@ void OBJObject::draw()
 		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
 	}
 	glEnd();
+	*/
 	// Pop the save state off the matrix stack
 	// This will undo the multiply we did earlier
 	glPopMatrix();
