@@ -31,7 +31,7 @@ OBJObject::~OBJObject()
 	glDeleteBuffers(1, &EBO);
 }
 
-void OBJObject::parse(const char *filepath) 
+void OBJObject::parse(const char *filepath)
 {
 	//Populate the face indices, vertices, and normals vectors with the OBJ Object data
 	//Open the file for reading called objFile.
@@ -46,27 +46,28 @@ void OBJObject::parse(const char *filepath)
 		if (strcmp(buf, "v") == 0) {
 			glm::vec3 vertex;
 			fscanf(objFile, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			//fscanf(objFile, "%f %f %f\n", ...colors...);//Colors?
 			vertices.push_back(vertex);
+			continue;
 		}
 		//Read in lines that start with "vn". Add into normals.
 		if (strcmp(buf, "vn") == 0) {
 			glm::vec3 normalVertex;
 			fscanf(objFile, "%f %f %f\n", &normalVertex.x, &normalVertex.y, &normalVertex.z);
 			normals.push_back(normalVertex);
+			continue;
 		}
 		//Read in lines that start with "f". Add into indices.
 		if (strcmp(buf, "f") == 0) {
 			unsigned int faces_v[3], faces_vn[3];
 			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &faces_v[0], &faces_vn[0], &faces_v[1], &faces_vn[1], &faces_v[2], &faces_vn[2]);
-			indices.push_back(faces_v[0]);
-			indices.push_back(faces_v[1]);
-			indices.push_back(faces_v[2]);
-			indices.push_back(faces_vn[0]);
-			indices.push_back(faces_vn[1]);
-			indices.push_back(faces_vn[2]);
+			indices.push_back(faces_v[0] - 1);
+			indices.push_back(faces_v[1] - 1);
+			indices.push_back(faces_v[2] - 1);
+			//indices.push_back(faces_vn[0]);
+			//indices.push_back(faces_vn[1]);
+			//indices.push_back(faces_vn[2]);
+			continue;
 		}
-
 	}
 	fclose(objFile);
 }
@@ -83,12 +84,20 @@ void OBJObject::setupObject()
 	glBindVertexArray(VAO); // Bind vertex array object
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind vertex buffer
-	glBufferData(GL_ARRAY_BUFFER, this->vertices.size(), &this->vertices, GL_STATIC_DRAW); // Set vertex buffer to vertices
-	glBufferData(GL_ARRAY_BUFFER, this->normals.size(), &this->normals, GL_STATIC_DRAW); // Set vertex buffer to normals
+	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(glm::vec3), &this->vertices[0], GL_STATIC_DRAW); // Set vertex buffer to vertices
+	//glBufferData(GL_ARRAY_BUFFER, this->normals.size() * sizeof(glm::vec3), &this->normals, GL_STATIC_DRAW); // Set vertex buffer to normals
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
+	
+	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
+		GL_FLOAT, // What type these components are
+		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
+		3 * sizeof(GLfloat), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
+	/*
 	//Vertex Positions
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
@@ -107,6 +116,7 @@ void OBJObject::setupObject()
 		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)offsetof(Vertex, Normal)); // Offset of the first vertex's component.
 
+    */
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
@@ -130,42 +140,51 @@ void OBJObject::draw(GLuint shaderProgram)
 	
 }
 
-void OBJObject::draw() 
+void OBJObject::draw()
 {
 	glMatrixMode(GL_MODELVIEW);
 	//Push a save state onto the matrix stack, and multiply in the toWorld matrix
 	glPushMatrix();
 	glMultMatrixf(&(toWorld[0][0]));
 
+	/*
 	glBegin(GL_POINTS);
 	// Loop through all the vertices of this OBJ Object and render them
-	for (unsigned int i = 0; i < vertices.size(); ++i) 
+	for (unsigned int i = 0; i < vertices.size(); ++i)
 	{
-		glm::vec3 normalized = glm::normalize(normals[i]);//Normalize for the colors.
-		float red = normalized.x;
-		float green = normalized.y;
-		float blue = normalized.z;
+	glm::vec3 normalized = glm::normalize(normals[i]);//Normalize for the colors.
+	float red = normalized.x;
+	float green = normalized.y;
+	float blue = normalized.z;
 
-		if (red < 0.0f) { red = 0.0f + (-0.5f)*red; }
-		else red = 0.0f + (0.5f)*red;
+	if (red < 0.0f) { red = 0.0f + (-0.5f)*red; }
+	else red = 0.0f + (0.5f)*red;
 
-		if (green < 0.0f) { green = 0.0f + (-0.5f)*green; }
-		else green = 0.0f + (0.5f)*green;
+	if (green < 0.0f) { green = 0.0f + (-0.5f)*green; }
+	else green = 0.0f + (0.5f)*green;
 
-		if (blue < 0.0f) { blue = 0.0f + (-0.5f)*blue; }
-		else blue = 0.0f + (0.5f)*blue;
+	if (blue < 0.0f) { blue = 0.0f + (-0.5f)*blue; }
+	else blue = 0.0f + (0.5f)*blue;
 
-		glColor3f(red, green, blue);
+	glColor3f(red, green, blue);
 
-		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
+	glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
 	}
 	glEnd();
-	
+	*/
+
+	glBegin(GL_TRIANGLES);
+	for (unsigned int i = 0; i < indices.size(); i++)
+	{
+		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
+	}
+	glEnd();
 	// Pop the save state off the matrix stack
 	// This will undo the multiply we did earlier
 	glPopMatrix();
 }
-
 
 void OBJObject::update()
 {
