@@ -55,9 +55,9 @@ void print_versions()
 	printf("OpenGL version supported %s\n", glGetString(GL_VERSION));
 
 	//If the shading language symbol is defined
-#ifdef GL_SHADING_LANGUAGE_VERSION
+	#ifdef GL_SHADING_LANGUAGE_VERSION
 	std::printf("Supported GLSL version is %s.\n", (char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
-#endif
+	#endif
 }
 
 int main(void)

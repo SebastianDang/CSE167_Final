@@ -1,4 +1,5 @@
 #include "OBJObject.h"
+#include "Window.h"
 #include <iostream>
 #include <fstream>
 
@@ -21,6 +22,13 @@ OBJObject::OBJObject(const char *filepath)
 	setCamera();
 	//Parse the object @ filepath.
 	parse(filepath);
+}
+
+std::vector<unsigned int> OBJObject::getIndices() {
+	if (this->indices.size() == 0) {
+		this->indices.push_back(0);
+	}
+	return this->indices;
 }
 
 std::vector<glm::vec3> OBJObject::getVertices()
@@ -117,7 +125,18 @@ void OBJObject::parse(const char *filepath)
 			fscanf(objFile, "%f %f %f\n", &normalVertex.x, &normalVertex.y, &normalVertex.z);
 			normals.push_back(normalVertex);
 		}
-		//Read in lines that start with "f". Add into faces.
+		//Read in lines that start with "f". Add into indices.
+		if (strcmp(buf, "f") == 0) {
+			unsigned int startIndex[3], endIndex[3];
+			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &startIndex[0], &endIndex[0], &startIndex[1], &endIndex[1], &startIndex[2], &endIndex[2]);
+			indices.push_back(startIndex[0]);
+			indices.push_back(startIndex[1]);
+			indices.push_back(startIndex[2]);
+			indices.push_back(endIndex[0]);
+			indices.push_back(endIndex[1]);
+			indices.push_back(endIndex[2]);
+		}
+
 	}
 	fclose(objFile);
 }
@@ -129,6 +148,8 @@ void OBJObject::draw()
 	glPushMatrix();
 	glMultMatrixf(&(toWorld[0][0]));
 
+
+	/*
 	glBegin(GL_POINTS);
 	// Loop through all the vertices of this OBJ Object and render them
 	for (unsigned int i = 0; i < vertices.size(); ++i) 
@@ -152,9 +173,47 @@ void OBJObject::draw()
 		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
 	}
 	glEnd();
+	*/
+
+
+	glBegin(GL_TRIANGLES);
+	for (unsigned int i = 0; i < indices.size(); i++)
+	{
+		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
+	}
+	glEnd();
+	
 	// Pop the save state off the matrix stack
 	// This will undo the multiply we did earlier
 	glPopMatrix();
+}
+
+void OBJObject::draw(GLuint shaderProgram)
+{
+	// Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices
+	glm::mat4 MVP = Window::P * Window::V * toWorld;
+	// We need to calculate this because as of GLSL version 1.40 (OpenGL 3.1, released March 2009), gl_ModelViewProjectionMatrix has been
+	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
+	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
+	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	/*
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	*/
+
+	glBegin(GL_TRIANGLES);
+	for (unsigned int i = 0; i < indices.size(); i++)
+	{
+		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
+		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
+	}
+	glEnd();
+
+
 }
 
 void OBJObject::update()

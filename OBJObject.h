@@ -21,6 +21,7 @@ private:
 public:
 	OBJObject(const char* filepath);
 
+	std::vector<unsigned int> getIndices();
 	std::vector<glm::vec3> getVertices();
 	std::vector<glm::vec3> getNormals();
 	glm::mat4 getWorld();
@@ -40,6 +41,7 @@ public:
 
 	void parse(const char* filepath);
 	void draw();
+	void draw(GLuint shaderProgram);
 	void spin(float);
 	void update();
 	void pointUp();

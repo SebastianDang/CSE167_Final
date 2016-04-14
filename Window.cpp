@@ -1,7 +1,8 @@
 #include "window.h"
 
-const char* window_title = "GLFW Starter Project";
+const char* window_title = "CSE 167 Homework 2";
 Cube * cube;
+OBJObject * object;
 GLint shaderProgram;
 
 // Default camera parameters
@@ -18,18 +19,20 @@ glm::mat4 Window::V;
 void Window::initialize_objects()
 {
 	cube = new Cube();
+	object = new OBJObject("bunny.obj");
 
 	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
-#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
+	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
-#else // Not windows
+	#else // Not windows
 	shaderProgram = LoadShaders("shader.vert", "shader.frag");
-#endif
+	#endif
 }
 
 void Window::clean_up()
 {
 	delete(cube);
+	delete(object);
 	glDeleteProgram(shaderProgram);
 }
 
@@ -100,6 +103,7 @@ void Window::display_callback(GLFWwindow* window)
 	
 	// Render the cube
 	cube->draw(shaderProgram);
+	object->draw();
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
