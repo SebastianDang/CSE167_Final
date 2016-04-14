@@ -18,9 +18,8 @@ glm::mat4 Window::V;
 
 void Window::initialize_objects()
 {
-	cube = new Cube();
+	//cube = new Cube();
 	object = new OBJObject("bunny.obj");
-
 	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
 	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
@@ -31,7 +30,7 @@ void Window::initialize_objects()
 
 void Window::clean_up()
 {
-	delete(cube);
+	//delete(cube);
 	delete(object);
 	glDeleteProgram(shaderProgram);
 }
@@ -90,7 +89,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 void Window::idle_callback()
 {
 	// Call the update function the cube
-	cube->update();
+	//cube->update();
 }
 
 void Window::display_callback(GLFWwindow* window)
@@ -102,8 +101,8 @@ void Window::display_callback(GLFWwindow* window)
 	glUseProgram(shaderProgram);
 	
 	// Render the cube
-	cube->draw(shaderProgram);
-	object->draw();
+	//cube->draw(shaderProgram);
+	object->draw(shaderProgram);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();

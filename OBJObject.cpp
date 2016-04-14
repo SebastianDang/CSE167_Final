@@ -16,89 +16,19 @@ OBJObject::OBJObject(const char *filepath)
 	this->angle = 0.0f;
 	this->orbitAngle = 0.0f;
 	this->pointSize = 1.0f;
-	//toWorld Matrix
-	setWorld();
-	//C_inverse Matrix
-	setCamera();
-	//Parse the object @ filepath.
-	parse(filepath);
-}
-
-std::vector<unsigned int> OBJObject::getIndices() {
-	if (this->indices.size() == 0) {
-		this->indices.push_back(0);
-	}
-	return this->indices;
-}
-
-std::vector<glm::vec3> OBJObject::getVertices()
-{
-	if (this->vertices.size() == 0) {
-		this->vertices.push_back(glm::vec3(0.0f));
-	}
-	return this->vertices;
-}
-
-std::vector<glm::vec3> OBJObject::getNormals()
-{
-	if (this->normals.size() == 0) {
-		this->normals.push_back(glm::vec3(0.0f));
-	}
-	return this->normals;
-}
-
-glm::mat4 OBJObject::getWorld() 
-{
-	return this->toWorld;
-}
-
-glm::mat4 OBJObject::getCamera()
-{
-	return this->c_inverse;
-}
-
-glm::mat4 OBJObject::getProjection()
-{
-	return this->projection;
-}
-
-glm::mat4 OBJObject::getViewport()
-{
-	return this->viewport;
-}
-
-float OBJObject::getPointSize() {
-	return this->pointSize;
-}
-
-void OBJObject::setWorld()
-{
 	this->toWorld = glm::mat4(1.0f);
+	//Parse the object @ filepath.
+	this->parse(filepath);
+	//Setup the object.
+	this->setupObject();
 }
 
-void OBJObject::setCamera()
+OBJObject::~OBJObject()
 {
-	glm::vec3 e = glm::vec3(0.0f, 0.0f, 20.0f);
-	glm::vec3 d = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-	this->c_inverse = glm::lookAt(e, d, up);
-}
-
-void OBJObject::setProjection(float window_width, float window_height)
-{
-	this->projection = glm::perspective(glm::radians(60.0f), (float)window_width / (float)window_height, 1.0f, 1000.0f);
-}
-
-void OBJObject::setViewport(float window_width, float window_height)
-{
-	float viewportX = (window_width - 0.0f) * (0.5f);
-	float viewportY = (window_height - 0.0f) * (0.5f);
-	float viewportX2 = (window_width + 0.0f) * (0.5f);
-	float viewportY2 = (window_height + 0.0f) * (0.5f);
-	this->viewport = glm::mat4(viewportX, 0.0f, 0.0f, viewportX2,
-		0.0f, viewportY, 0.0f, viewportY2,
-		0.0f, 0.0f, 0.5f, 0.5f,
-		0.0f, 0.0f, 0.0f, 1.0f);
+	// Properly de-allocate all resources once they've outlived their purpose
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 }
 
 void OBJObject::parse(const char *filepath) 
@@ -127,18 +57,77 @@ void OBJObject::parse(const char *filepath)
 		}
 		//Read in lines that start with "f". Add into indices.
 		if (strcmp(buf, "f") == 0) {
-			unsigned int startIndex[3], endIndex[3];
-			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &startIndex[0], &endIndex[0], &startIndex[1], &endIndex[1], &startIndex[2], &endIndex[2]);
-			indices.push_back(startIndex[0]);
-			indices.push_back(startIndex[1]);
-			indices.push_back(startIndex[2]);
-			indices.push_back(endIndex[0]);
-			indices.push_back(endIndex[1]);
-			indices.push_back(endIndex[2]);
+			unsigned int faces_v[3], faces_vn[3];
+			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &faces_v[0], &faces_vn[0], &faces_v[1], &faces_vn[1], &faces_v[2], &faces_vn[2]);
+			indices.push_back(faces_v[0]);
+			indices.push_back(faces_v[1]);
+			indices.push_back(faces_v[2]);
+			indices.push_back(faces_vn[0]);
+			indices.push_back(faces_vn[1]);
+			indices.push_back(faces_vn[2]);
 		}
 
 	}
 	fclose(objFile);
+}
+
+void OBJObject::setupObject()
+{
+	// Create buffers/arrays
+	glGenVertexArrays(1, &this->VAO);
+	glGenBuffers(1, &this->VBO);
+	glGenBuffers(1, &this->EBO);
+
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	// For now, we only bind vertices and indices (faces)
+	glBindVertexArray(VAO); // Bind vertex array object
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind vertex buffer
+	glBufferData(GL_ARRAY_BUFFER, this->vertices.size(), &this->vertices, GL_STATIC_DRAW); // Set vertex buffer to vertices
+	glBufferData(GL_ARRAY_BUFFER, this->normals.size(), &this->normals, GL_STATIC_DRAW); // Set vertex buffer to normals
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind 
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices, GL_STATIC_DRAW);
+
+	//Vertex Positions
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
+		GL_FLOAT, // What type these components are
+		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
+		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+
+	//Vertex Normals (Colors / RGB)
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
+		GL_FLOAT, // What type these components are
+		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
+		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		(GLvoid*)offsetof(Vertex, Normal)); // Offset of the first vertex's component.
+
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
+
+}
+
+void OBJObject::draw(GLuint shaderProgram)
+{
+	// Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices
+	glm::mat4 MVP = Window::P * Window::V * toWorld;
+	// We need to calculate this because as of GLSL version 1.40 (OpenGL 3.1, released March 2009), gl_ModelViewProjectionMatrix has been
+	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
+	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
+	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	
+	glBindVertexArray(this->VAO);
+	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	
 }
 
 void OBJObject::draw() 
@@ -148,8 +137,6 @@ void OBJObject::draw()
 	glPushMatrix();
 	glMultMatrixf(&(toWorld[0][0]));
 
-
-	/*
 	glBegin(GL_POINTS);
 	// Loop through all the vertices of this OBJ Object and render them
 	for (unsigned int i = 0; i < vertices.size(); ++i) 
@@ -173,48 +160,12 @@ void OBJObject::draw()
 		glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
 	}
 	glEnd();
-	*/
-
-
-	glBegin(GL_TRIANGLES);
-	for (unsigned int i = 0; i < indices.size(); i++)
-	{
-		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
-	}
-	glEnd();
 	
 	// Pop the save state off the matrix stack
 	// This will undo the multiply we did earlier
 	glPopMatrix();
 }
 
-void OBJObject::draw(GLuint shaderProgram)
-{
-	// Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices
-	glm::mat4 MVP = Window::P * Window::V * toWorld;
-	// We need to calculate this because as of GLSL version 1.40 (OpenGL 3.1, released March 2009), gl_ModelViewProjectionMatrix has been
-	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
-	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	/*
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-	*/
-
-	glBegin(GL_TRIANGLES);
-	for (unsigned int i = 0; i < indices.size(); i++)
-	{
-		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
-	}
-	glEnd();
-
-
-}
 
 void OBJObject::update()
 {

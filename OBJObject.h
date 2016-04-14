@@ -7,33 +7,46 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
+/* Vertex: [X, Y, Z] [R, G, B] [S, T] */
+struct Vertex {
+	// Position
+	glm::vec3 Position;
+	// Normal (Color)
+	glm::vec3 Normal;
+	// TexCoords
+	//glm::vec2 TexCoords;
+};
+
+struct Texture {
+	GLuint id;
+	std::string type;
+};
+
 class OBJObject
 {
 private:
-	std::vector<unsigned int> indices;
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> normals;
+	std::vector<glm::vec3> vertices;//v
+	std::vector<glm::vec3> normals;//vn
+	std::vector<unsigned int> indices;//f
+	
+	std::vector<Texture> textures;//List of textures
+
+	GLuint VAO, VBO, EBO;
+
+	void setupObject();
+
+	/*--------------------*/
+
 	glm::mat4 toWorld;
-	glm::mat4 c_inverse;
-	glm::mat4 projection;
-	glm::mat4 viewport;
 
 public:
 	OBJObject(const char* filepath);
-
-	std::vector<unsigned int> getIndices();
-	std::vector<glm::vec3> getVertices();
-	std::vector<glm::vec3> getNormals();
-	glm::mat4 getWorld();
-	glm::mat4 getCamera();
-	glm::mat4 getProjection();
-	glm::mat4 getViewport();
-
-	void setWorld();
-	void setCamera();
-	void setProjection(float, float);
-	void setViewport(float, float);
+	~OBJObject();
 	
+	void draw(GLuint shaderProgram);
+
+	/*--------------------*/
+
 	float angle;
 	float orbitAngle;
 	float pointSize;
@@ -41,7 +54,6 @@ public:
 
 	void parse(const char* filepath);
 	void draw();
-	void draw(GLuint shaderProgram);
 	void spin(float);
 	void update();
 	void pointUp();
