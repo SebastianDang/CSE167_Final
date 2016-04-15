@@ -42,6 +42,8 @@ private:
 public:
 	OBJObject(const char* filepath);
 	~OBJObject();
+
+	void parse(const char* filepath);
 	
 	void draw(GLuint shaderProgram);
 
@@ -52,7 +54,6 @@ public:
 	float pointSize;
 	float getPointSize();
 
-	void parse(const char* filepath);
 	void draw();
 	void spin(float);
 	void update();

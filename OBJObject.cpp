@@ -31,12 +31,22 @@ OBJObject::~OBJObject()
 	glDeleteBuffers(1, &EBO);
 }
 
+//Populate the face indices, vertices, and normals vectors with the OBJ Object data
 void OBJObject::parse(const char *filepath)
 {
-	//Populate the face indices, vertices, and normals vectors with the OBJ Object data
+	//Initialize min and max values for each coordinate.
+	float minX, minY, minZ, maxX, maxY, maxZ, avgX, avgY, avgZ, scale_v;
+	minX = INFINITY;
+	minY = INFINITY;
+	minZ = INFINITY;
+	maxX = -INFINITY;
+	maxY = -INFINITY;
+	maxZ = -INFINITY;
+
 	//Open the file for reading called objFile.
 	std::FILE * objFile = fopen(filepath, "r");
 	if (objFile == NULL) return;
+
 	//Read the file until the end; "# are commments to be ignored".
 	while (1) {
 		char buf[BUFSIZ];
@@ -47,6 +57,16 @@ void OBJObject::parse(const char *filepath)
 			glm::vec3 vertex;
 			fscanf(objFile, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
 			vertices.push_back(vertex);
+
+			//Calculate min, max for x, y, z.
+			if (vertex.x < minX) { minX = vertex.x; }
+			if (vertex.y < minY) { minY = vertex.y; }
+			if (vertex.z < minZ) { minZ = vertex.z; }
+
+			if (vertex.x > maxX) { maxX = vertex.x; }
+			if (vertex.y > maxY) { maxY = vertex.y; }
+			if (vertex.z > maxZ) { maxZ = vertex.z; }
+
 			continue;
 		}
 		//Read in lines that start with "vn". Add into normals.
@@ -67,6 +87,28 @@ void OBJObject::parse(const char *filepath)
 		}
 	}
 	fclose(objFile);
+
+	//Calculate average x, y, z.
+	avgX = (minX + maxX) / 2;
+	avgY = (minY + maxY) / 2;
+	avgZ = (minX + maxZ) / 2;
+
+	//Calculate scale value.
+	scale_v = maxX;
+	if (scale_v > maxY) { scale_v = maxY; }
+	if (scale_v > maxZ) { scale_v = maxZ; }
+
+	//Subtract the average to center all objects and scale all to the same size.
+	for (unsigned int i = 0; i < vertices.size(); i++)
+	{
+		vertices[i].x = vertices[i].x - avgX;
+		vertices[i].y = vertices[i].y - avgY;
+		vertices[i].z = vertices[i].z - avgZ;
+
+		vertices[i] *= (1 / (scale_v));
+	}
+
+	//Everything is uniform, do we want to scale it to window?
 }
 
 void OBJObject::setupObject()
@@ -181,7 +223,7 @@ void OBJObject::update()
 	this->angle += SPIN_STEP;//Current Spin Angle.
 	if (this->angle > 360.0f || this->angle < -360.0f) this->angle = 0.0f;
 	//Spins.
-	spin(this->angle);
+	//spin(this->angle);
 }
 
 void OBJObject::spin(float deg)
