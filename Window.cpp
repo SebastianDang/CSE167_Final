@@ -108,7 +108,7 @@ void Window::display_callback(GLFWwindow* window)
 
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	// Check for a key press
+	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
 		// Check if escape was pressed
@@ -116,6 +116,27 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		{
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		//Callback for F1
+		if (key == GLFW_KEY_F1)
+		{
+			OBJObject * objectHold = object;
+			delete(objectHold);
+			object = new OBJObject("bunny.obj");
+		}
+		//Callback for F2
+		if (key == GLFW_KEY_F2)
+		{
+			OBJObject * objectHold = object;
+			delete(objectHold);
+			object = new OBJObject("bear.obj");
+		}
+		//Callback for F3
+		if (key == GLFW_KEY_F3)
+		{
+			OBJObject * objectHold = object;
+			delete(objectHold);
+			object = new OBJObject("dragon.obj");
 		}
 	}
 }

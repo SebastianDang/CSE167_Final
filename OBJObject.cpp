@@ -62,11 +62,9 @@ void OBJObject::parse(const char *filepath)
 			if (vertex.x < minX) { minX = vertex.x; }
 			if (vertex.y < minY) { minY = vertex.y; }
 			if (vertex.z < minZ) { minZ = vertex.z; }
-
 			if (vertex.x > maxX) { maxX = vertex.x; }
 			if (vertex.y > maxY) { maxY = vertex.y; }
 			if (vertex.z > maxZ) { maxZ = vertex.z; }
-
 			continue;
 		}
 		//Read in lines that start with "vn". Add into normals.
@@ -94,9 +92,14 @@ void OBJObject::parse(const char *filepath)
 	avgZ = (minX + maxZ) / 2;
 
 	//Calculate scale value.
-	scale_v = maxX;
-	if (scale_v > maxY) { scale_v = maxY; }
-	if (scale_v > maxZ) { scale_v = maxZ; }
+	scale_v = -INFINITY;
+	if (maxX > scale_v) { scale_v = maxX; }
+	if (maxY > scale_v) { scale_v = maxY; }
+	if (maxZ > scale_v) { scale_v = maxZ; }
+
+	//Calculate absolute min and max values for debugging.
+	float minimum = INFINITY;
+	float maximum = -INFINITY;
 
 	//Subtract the average to center all objects and scale all to the same size.
 	for (unsigned int i = 0; i < vertices.size(); i++)
@@ -106,7 +109,17 @@ void OBJObject::parse(const char *filepath)
 		vertices[i].z = vertices[i].z - avgZ;
 
 		vertices[i] *= (1 / (scale_v));
+
+		//For Debugging.
+		if (vertices[i].x < minimum) { minimum = vertices[i].x; }
+		if (vertices[i].y < minimum) { minimum = vertices[i].y; }
+		if (vertices[i].z < minimum) { minimum = vertices[i].z; }
+		if (vertices[i].x > maximum) { maximum = vertices[i].x; }
+		if (vertices[i].y > maximum) { maximum = vertices[i].y; }
+		if (vertices[i].z > maximum) { maximum = vertices[i].z; }
 	}
+
+	printf("MIN: %f, MAX: %f \n", minimum, maximum);//For Debugging.
 
 	//Everything is uniform, do we want to scale it to window?
 }
@@ -137,18 +150,23 @@ void OBJObject::setupObject()
 		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
-	/*
 	//Vertex Normals (Colors / RGB)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
 		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
 		GL_FLOAT, // What type these components are
 		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)offsetof(Vertex, Normal)); // Offset of the first vertex's component.
-    */
-
-	glEnableVertexAttribArray(0);
+    
+	//Vertex Textures
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		2, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
+		GL_FLOAT, // What type these components are
+		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
+		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		(GLvoid*)offsetof(Vertex, TexCoords)); // Offset of the first vertex's component.
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 
