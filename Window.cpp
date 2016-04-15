@@ -108,6 +108,43 @@ void Window::display_callback(GLFWwindow* window)
 
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	//Define shift keys for capital letters
+	int Lshift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
+	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
+
+	//Define x, y, z, s, o keys
+	int xKey = glfwGetKey(window, GLFW_KEY_X);
+	int yKey = glfwGetKey(window, GLFW_KEY_Y);
+	int zKey = glfwGetKey(window, GLFW_KEY_Z);
+	int sKey = glfwGetKey(window, GLFW_KEY_S);
+	int oKey = glfwGetKey(window, GLFW_KEY_O);
+	int pKey = glfwGetKey(window, GLFW_KEY_P);
+
+	//Callback for 'p'/'P': adjust point size by a small amount.
+	if (pKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->pointUp();
+	else if (pKey == GLFW_PRESS) object->pointDown();
+
+	//Callback for 'x'/'X': move left/right by a small amount.
+	if (xKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->right();
+	else if (xKey == GLFW_PRESS) object->left();
+
+	//Callback for 'y'/'Y': move down/up by a small amount.
+	if (yKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->up();
+	else if (yKey == GLFW_PRESS) object->down();
+
+	//Callback for 'z'/'Z': move into/out of the screen by a small amount.
+	if (zKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->out();
+	else if (zKey == GLFW_PRESS) object->in();
+
+	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
+	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->scaleUp();
+	else if (sKey == GLFW_PRESS) object->scaleDown();
+
+	//Callback for 'o'/'O': orbit the model about the window's z axis by a small number of degrees per key press,  
+	//Counterclockwise ('o') or clockwise ('O'). The z axis crosses the screen in the center of the window.
+	if (oKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->orbitCW();
+	else if (oKey == GLFW_PRESS) object->orbitCCW();
+
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{

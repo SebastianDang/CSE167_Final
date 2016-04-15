@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 
+#define DEBUG 0
 #define MOVE_STEP 1.0f
 #define ORBIT_STEP 5.0f
 #define SPIN_STEP 1.0f
@@ -31,22 +32,17 @@ OBJObject::~OBJObject()
 	glDeleteBuffers(1, &EBO);
 }
 
-//Populate the face indices, vertices, and normals vectors with the OBJ Object data
+/* Populate the face indices, vertices, and normals vectors with the OBJ Object data */
 void OBJObject::parse(const char *filepath)
 {
-	//Initialize min and max values for each coordinate.
+	//Initialize min, max, scale values for each coordinate.
 	float minX, minY, minZ, maxX, maxY, maxZ, avgX, avgY, avgZ, scale_v;
-	minX = INFINITY;
-	minY = INFINITY;
-	minZ = INFINITY;
-	maxX = -INFINITY;
-	maxY = -INFINITY;
-	maxZ = -INFINITY;
-
+	minX = INFINITY, minY = INFINITY, minZ = INFINITY;
+	maxX = -INFINITY, maxY = -INFINITY, maxZ = -INFINITY;
+	scale_v = -INFINITY;
 	//Open the file for reading called objFile.
 	std::FILE * objFile = fopen(filepath, "r");
 	if (objFile == NULL) return;
-
 	//Read the file until the end; "# are commments to be ignored".
 	while (1) {
 		char buf[BUFSIZ];
@@ -57,7 +53,6 @@ void OBJObject::parse(const char *filepath)
 			glm::vec3 vertex;
 			fscanf(objFile, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
 			vertices.push_back(vertex);
-
 			//Calculate min, max for x, y, z.
 			if (vertex.x < minX) { minX = vertex.x; }
 			if (vertex.y < minY) { minY = vertex.y; }
@@ -85,43 +80,40 @@ void OBJObject::parse(const char *filepath)
 		}
 	}
 	fclose(objFile);
-
 	//Calculate average x, y, z.
 	avgX = (minX + maxX) / 2;
 	avgY = (minY + maxY) / 2;
 	avgZ = (minX + maxZ) / 2;
-
 	//Calculate scale value.
-	scale_v = -INFINITY;
-	if (maxX > scale_v) { scale_v = maxX; }
-	if (maxY > scale_v) { scale_v = maxY; }
-	if (maxZ > scale_v) { scale_v = maxZ; }
-
-	//Calculate absolute min and max values for debugging.
+	float scale_x = (maxX - avgX);
+	float scale_y = (maxY - avgY);
+	float scale_z = (maxZ - avgZ);
+	if (scale_x > scale_v) { scale_v = scale_x; }
+	if (scale_y > scale_v) { scale_v = scale_y; }
+	if (scale_z > scale_v) { scale_v = scale_z; }
+	//Calculate absolute min and max values for debugging. Also, print values for debugging.
+	if (DEBUG) { printf("MIN X: %f, MAX X: %f \n", minX, maxX); printf("MIN Y: %f, MAX Y: %f \n", minY, maxY); printf("MIN Z: %f, MAX Z: %f \n", minZ, maxZ); }
+	if (DEBUG) { printf("scale: %f\n", scale_v); }
 	float minimum = INFINITY;
 	float maximum = -INFINITY;
-
-	//Subtract the average to center all objects and scale all to the same size.
+	//Subtract the average to center all objects and multiply by (1/scale) to bring them down to size.
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		vertices[i].x = vertices[i].x - avgX;
 		vertices[i].y = vertices[i].y - avgY;
 		vertices[i].z = vertices[i].z - avgZ;
-
 		vertices[i] *= (1 / (scale_v));
-
-		//For Debugging.
-		if (vertices[i].x < minimum) { minimum = vertices[i].x; }
-		if (vertices[i].y < minimum) { minimum = vertices[i].y; }
-		if (vertices[i].z < minimum) { minimum = vertices[i].z; }
-		if (vertices[i].x > maximum) { maximum = vertices[i].x; }
-		if (vertices[i].y > maximum) { maximum = vertices[i].y; }
-		if (vertices[i].z > maximum) { maximum = vertices[i].z; }
+		if (DEBUG) {//For Debugging.
+			if (vertices[i].x < minimum) { minimum = vertices[i].x; }
+			if (vertices[i].y < minimum) { minimum = vertices[i].y; }
+			if (vertices[i].z < minimum) { minimum = vertices[i].z; }
+			if (vertices[i].x > maximum) { maximum = vertices[i].x; }
+			if (vertices[i].y > maximum) { maximum = vertices[i].y; }
+			if (vertices[i].z > maximum) { maximum = vertices[i].z; }
+		}
 	}
+	if (DEBUG) { printf("MIN: %f, MAX: %f \n", minimum, maximum); }
 
-	printf("MIN: %f, MAX: %f \n", minimum, maximum);//For Debugging.
-
-	//Everything is uniform, do we want to scale it to window?
 }
 
 void OBJObject::setupObject()
@@ -150,6 +142,7 @@ void OBJObject::setupObject()
 		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
+	/*
 	//Vertex Normals (Colors / RGB)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
@@ -167,6 +160,8 @@ void OBJObject::setupObject()
 		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
 		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
 		(GLvoid*)offsetof(Vertex, TexCoords)); // Offset of the first vertex's component.
+
+	*/
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
 
