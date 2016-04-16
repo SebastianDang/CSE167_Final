@@ -5,18 +5,12 @@
 
 #define DEBUG 0
 #define MOVE_STEP 1.0f
-#define ORBIT_STEP 5.0f
-#define SPIN_STEP 1.0f
-#define POINT_SIZE_STEP 1.0f
-#define POINT_SIZE_MAX	10000.0f
-#define POINT_SIZE_MIN	0.0f
+#define SCALE_UP 1.2f
+#define SCALE_DOWN 0.8f
 
 OBJObject::OBJObject(const char *filepath) 
 {
-	//Initialize World, Angle, Orbit Angle, Point Size.
-	this->angle = 0.0f;
-	this->orbitAngle = 0.0f;
-	this->pointSize = 1.0f;
+	//Initialize World
 	this->toWorld = glm::mat4(1.0f);
 	//Parse the object @ filepath.
 	this->parse(filepath);
@@ -32,7 +26,7 @@ OBJObject::~OBJObject()
 	glDeleteBuffers(1, &EBO);
 }
 
-/* Populate the face indices, vertices, and normals vectors with the OBJ Object data */
+/* Populate the face indices, vertices, and normals vectors with the OBJ Object data. */
 void OBJObject::parse(const char *filepath)
 {
 	//Initialize min, max, scale values for each coordinate.
@@ -91,11 +85,6 @@ void OBJObject::parse(const char *filepath)
 	if (scale_x > scale_v) { scale_v = scale_x; }
 	if (scale_y > scale_v) { scale_v = scale_y; }
 	if (scale_z > scale_v) { scale_v = scale_z; }
-	//Calculate absolute min and max values for debugging. Also, print values for debugging.
-	if (DEBUG) { printf("MIN X: %f, MAX X: %f \n", minX, maxX); printf("MIN Y: %f, MAX Y: %f \n", minY, maxY); printf("MIN Z: %f, MAX Z: %f \n", minZ, maxZ); }
-	if (DEBUG) { printf("scale: %f\n", scale_v); }
-	float minimum = INFINITY;
-	float maximum = -INFINITY;
 	//Subtract the average to center all objects and multiply by (1/scale) to bring them down to size.
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
@@ -103,72 +92,41 @@ void OBJObject::parse(const char *filepath)
 		vertices[i].y = vertices[i].y - avgY;
 		vertices[i].z = vertices[i].z - avgZ;
 		vertices[i] *= (1 / (scale_v));
-		if (DEBUG) {//For Debugging.
-			if (vertices[i].x < minimum) { minimum = vertices[i].x; }
-			if (vertices[i].y < minimum) { minimum = vertices[i].y; }
-			if (vertices[i].z < minimum) { minimum = vertices[i].z; }
-			if (vertices[i].x > maximum) { maximum = vertices[i].x; }
-			if (vertices[i].y > maximum) { maximum = vertices[i].y; }
-			if (vertices[i].z > maximum) { maximum = vertices[i].z; }
-		}
 	}
-	if (DEBUG) { printf("MIN: %f, MAX: %f \n", minimum, maximum); }
-
 }
 
+/* Setup the object for modern openGL rendering. */
 void OBJObject::setupObject()
 {
-	// Create buffers/arrays
+	//Create buffers/arrays.
 	glGenVertexArrays(1, &this->VAO);
 	glGenBuffers(1, &this->VBO);
 	glGenBuffers(1, &this->EBO);
 
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-	// For now, we only bind vertices and indices (faces)
+	//Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	//For now, we only bind vertices and indices (faces).
 	glBindVertexArray(VAO); // Bind vertex array object
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind vertex buffer
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(glm::vec3), &this->vertices[0], GL_STATIC_DRAW); // Set vertex buffer to vertices
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind indices buffer 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
 	
 	//Vertex Positions
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
-		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
-		GL_FLOAT, // What type these components are
-		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(glm::vec3), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+	glVertexAttribPointer(0,//This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		3, //This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component).
+		GL_FLOAT, //What type these components are.
+		GL_FALSE, //GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't.
+		sizeof(glm::vec3), //Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between.
+		(GLvoid*)0); //Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
 
-	/*
-	//Vertex Normals (Colors / RGB)
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
-		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
-		GL_FLOAT, // What type these components are
-		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-		(GLvoid*)offsetof(Vertex, Normal)); // Offset of the first vertex's component.
-    
-	//Vertex Textures
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 1. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
-		2, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an r, g, and b component)
-		GL_FLOAT, // What type these components are
-		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		sizeof(Vertex), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-		(GLvoid*)offsetof(Vertex, TexCoords)); // Offset of the first vertex's component.
-
-	*/
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
-
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
-
+	glBindBuffer(GL_ARRAY_BUFFER, 0); //Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind.
+	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
 }
 
+/* Render the object in modern openGL using a shader program. */
 void OBJObject::draw(GLuint shaderProgram)
 {
 	// Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices
@@ -177,215 +135,60 @@ void OBJObject::draw(GLuint shaderProgram)
 	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
 	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
-void OBJObject::draw()
-{
-	glMatrixMode(GL_MODELVIEW);
-	//Push a save state onto the matrix stack, and multiply in the toWorld matrix
-	glPushMatrix();
-	glMultMatrixf(&(toWorld[0][0]));
-
-	glBegin(GL_POINTS);
-	// Loop through all the vertices of this OBJ Object and render them
-	for (unsigned int i = 0; i < vertices.size(); ++i)
-	{
-	glm::vec3 normalized = glm::normalize(normals[i]);//Normalize for the colors.
-	float red = normalized.x;
-	float green = normalized.y;
-	float blue = normalized.z;
-
-	if (red < 0.0f) { red = 0.0f + (-0.5f)*red; }
-	else red = 0.0f + (0.5f)*red;
-
-	if (green < 0.0f) { green = 0.0f + (-0.5f)*green; }
-	else green = 0.0f + (0.5f)*green;
-
-	if (blue < 0.0f) { blue = 0.0f + (-0.5f)*blue; }
-	else blue = 0.0f + (0.5f)*blue;
-
-	glColor3f(red, green, blue);
-
-	glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);//Draw the vertex
-	}
-	glEnd();
-
-	/*
-	glBegin(GL_TRIANGLES);
-	for (unsigned int i = 0; i < indices.size(); i++)
-	{
-		glColor3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glNormal3f(normals[indices[i]].x, normals[indices[i]].y, normals[indices[i]].z);
-		glVertex3f(vertices[indices[i]].x, vertices[indices[i]].y, vertices[indices[i]].z);
-	}
-	glEnd();
-	*/
-	// Pop the save state off the matrix stack
-	// This will undo the multiply we did earlier
-	glPopMatrix();
-}
-
-void OBJObject::update()
-{
-	//Update any point size changes.
-	glPointSize(this->pointSize);
-	this->angle += SPIN_STEP;//Current Spin Angle.
-	if (this->angle > 360.0f || this->angle < -360.0f) this->angle = 0.0f;
-	//Spins.
-	//spin(this->angle);
-}
-
-void OBJObject::spin(float deg)
-{
-	this->toWorld *= glm::rotate(glm::mat4(SPIN_STEP), 1.0f / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
-}
-
-void OBJObject::pointUp() {
-	this->pointSize += POINT_SIZE_STEP;
-	if (this->pointSize >= POINT_SIZE_MAX) {//Maintain maximum point size of GL_POINT_SIZE_MAX.
-		this->pointSize = POINT_SIZE_MAX;
-	}
-}
-
-void OBJObject::pointDown() {
-	this->pointSize -= POINT_SIZE_STEP;
-	if (this->pointSize <= POINT_SIZE_MIN) {//Maintain minimum point size of GL_POINT_SIZE_MIN.
-		this->pointSize = POINT_SIZE_MIN;
-	}
-}
-
-void OBJObject::left()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(-MOVE_STEP, 0.0f, 0.0f));
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::right()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(MOVE_STEP, 0.0f, 0.0f));
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::up()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, MOVE_STEP, 0.0f));
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::down()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -MOVE_STEP, 0.0f));
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::in()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -MOVE_STEP));
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::out()
-{
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))*glm::rotate(glm::mat4(1.0f), -this->orbitAngle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld *= glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, MOVE_STEP));
-	this->toWorld *= translateInverse;
-}
-
+/* Scale the object up. */
 void OBJObject::scaleUp()
 {
-	//Scale by World.
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(SCALE_UP));
 	this->toWorld *= scaleMatrix;
 }
 
+/* Scale the object down. */
 void OBJObject::scaleDown()
 {
-	//Scale by World.
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(SCALE_DOWN));
 	this->toWorld *= scaleMatrix;
 }
 
-void OBJObject::orbitCW()
-{
-	this->orbitAngle -= ORBIT_STEP;
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-
-	glm::mat4 orbit = glm::rotate(glm::mat4(1.0f), -ORBIT_STEP / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 orbitI = glm::rotate(glm::mat4(1.0f), ORBIT_STEP / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 orbitInverse = glm::inverse(orbit);
-
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*orbitInverse*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld = orbit*toWorld;
-	this->toWorld *= translateInverse;
-}
-
-void OBJObject::orbitCCW()
-{
-	this->orbitAngle += ORBIT_STEP;//Update Angle.
-	glm::vec4 originVec4 = glm::vec4(toWorld[3]);
-	glm::vec3 originVec3 = glm::vec3(originVec4);
-
-	glm::mat4 orbit = glm::rotate(glm::mat4(1.0f), ORBIT_STEP / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 orbitI = glm::rotate(glm::mat4(1.0f), -ORBIT_STEP / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 orbitInverse = glm::inverse(orbit);
-	
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), -originVec3)*orbitInverse*glm::rotate(glm::mat4(1.0f), -this->angle / 180.0f * glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 translateInverse = glm::inverse(translate);
-
-	this->toWorld *= translate;
-	this->toWorld = orbit*toWorld;
-	this->toWorld *= translateInverse;
-}
-
+/* Fix Orientation, position in space (World). */
 void OBJObject::reset()
 {
-	//Reset any rotations and point size (World).
-	this->angle = 0.0f;
-	this->orbitAngle = 0.0f;
-	this->pointSize = 1.0f;
-	//Fix Orientation, position in space (World).
 	toWorld = glm::mat4(1.0f);
+}
+
+/* Trackball mapping used to map coordinates in a sphere instead of window coordinates x and y. */
+glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is a specific Windows class. Either use separate x and y values for the mouse location, or use a Vector3 in which you ignore the z coordinate.
+{
+	glm::vec3 trackball_p;    // Vector v is the synthesized 3D position of the mouse location on the trackball
+	float depth;     // this is the depth of the mouse location: the delta between the plane through the center of the trackball and the z position of the mouse
+	trackball_p.x = (2.0*point.x - Window::width) / Window::width;   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1
+	trackball_p.y = (Window::height - 2.0*point.y) / Window::height;   // this does the equivalent to the above for the mouse Y position
+	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below
+	depth = trackball_p.length();    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin)
+	depth = (depth<1.0) ? depth : 1.0;   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line
+	trackball_p.z = sqrtf(1.001 - (depth*depth));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1
+	trackball_p = glm::normalize(trackball_p); // Still need to normalize, since we only capped d, not v.
+	return trackball_p;  // return the mouse location on the surface of the trackball
+}
+
+/* Rotate around the middle of the screen based on mouse drag from v to w. */
+void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
+{
+	glm::vec3 direction = w - v;
+	float velocity = direction.length();
+	if (velocity > 0.0001) 
+	{
+		//Calculate Rotation Axis.
+		glm::vec3 rotateAxis = glm::cross(v, w);
+		glm::vec3 rotAxis = glm::vec3(rotateAxis.x, rotateAxis.y, 0.0f);
+		//Calculate Rotation Angle.
+		float rot_angle = acos(glm::dot(v, w));
+		//Calculate Rotation.
+		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
+		this->toWorld = rotate*this->toWorld;
+	}
 }

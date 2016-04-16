@@ -28,48 +28,31 @@ private:
 	std::vector<glm::vec3> vertices;//v
 	std::vector<glm::vec3> normals;//vn
 	std::vector<unsigned int> indices;//f
-	
 	std::vector<Texture> textures;//List of textures
+	glm::mat4 toWorld;
 
 	GLuint VAO, VBO, EBO;
-
 	void setupObject();
-
-	/*--------------------*/
-
-	glm::mat4 toWorld;
 
 public:
 	OBJObject(const char* filepath);
 	~OBJObject();
 
 	void parse(const char* filepath);
-	
 	void draw(GLuint shaderProgram);
+	void scaleUp();
+	void scaleDown();
+	void reset();
 
-	/*--------------------*/
+	glm::vec3 trackBallMapping(glm::vec3 point);
 
-	float angle;
-	float orbitAngle;
-	float pointSize;
-	float getPointSize();
-
-	void draw();
-	void spin(float);
-	void update();
-	void pointUp();
-	void pointDown();
+	void rotate(glm::vec3 v, glm::vec3 w);
 	void left();
 	void right();
 	void up();
 	void down();
 	void in();
 	void out();
-	void scaleUp();
-	void scaleDown();
-	void orbitCW();
-	void orbitCCW();
-	void reset();
 };
 
 #endif
