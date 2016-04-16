@@ -136,7 +136,7 @@ void OBJObject::draw(GLuint shaderProgram)
 	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glBindVertexArray(this->VAO);
-	glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
@@ -165,12 +165,12 @@ glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is
 {
 	glm::vec3 trackball_p;    // Vector v is the synthesized 3D position of the mouse location on the trackball
 	float depth;     // this is the depth of the mouse location: the delta between the plane through the center of the trackball and the z position of the mouse
-	trackball_p.x = (2.0*point.x - Window::width) / Window::width;   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1
-	trackball_p.y = (Window::height - 2.0*point.y) / Window::height;   // this does the equivalent to the above for the mouse Y position
+	trackball_p.x = (float)((2.0*point.x - Window::width) / Window::width);   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1
+	trackball_p.y = (float)((Window::height - 2.0*point.y) / Window::height);   // this does the equivalent to the above for the mouse Y position
 	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below
-	depth = trackball_p.length();    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin)
-	depth = (depth<1.0) ? depth : 1.0;   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line
-	trackball_p.z = sqrtf(1.001 - (depth*depth));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1
+	depth = (float)trackball_p.length();    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin)
+	depth = (float)((depth<1.0) ? depth : 1.0);   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line
+	trackball_p.z = (float)(sqrtf((float)1.001 - (float)(depth*depth)));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1
 	trackball_p = glm::normalize(trackball_p); // Still need to normalize, since we only capped d, not v.
 	return trackball_p;  // return the mouse location on the surface of the trackball
 }
@@ -179,7 +179,7 @@ glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is
 void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
-	float velocity = direction.length();
+	float velocity = (float)direction.length();
 	if (velocity > 0.0001) 
 	{
 		//Calculate Rotation Axis.
