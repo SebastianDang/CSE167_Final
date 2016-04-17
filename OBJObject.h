@@ -45,8 +45,9 @@ public:
 	void reset();
 
 	glm::vec3 trackBallMapping(glm::vec3 point);
-
 	void rotate(glm::vec3 v, glm::vec3 w);
+	void translate(glm::vec3 v, glm::vec3 w);
+
 	void left();
 	void right();
 	void up();

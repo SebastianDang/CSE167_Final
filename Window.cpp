@@ -182,12 +182,12 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	//On left drag, we perform rotations.
 	if (Window::status == LEFT_HOLD) 
 	{
-		glm::vec3 curPoint = object->trackBallMapping(point);
-		object->rotate(Window::lastPoint, curPoint);
+		object->rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
 	}
 	//On right drag, we perform translations.
-	if (Window::status == RIGHT_HOLD) {
-
+	if (Window::status == RIGHT_HOLD) 
+	{
+		object->translate(Window::lastPoint, point);//Set it to window coordinates.
 	}
 }
 
@@ -199,17 +199,21 @@ void Window::cursor_button_callback(GLFWwindow* window, int button, int action, 
 	int right_click = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 	//Get current mouse position.
 	glm::vec3 mouse_position = glm::vec3((float)Window::x, (float)Window::y, 0.0f);
-	//Check for clicks and holds.
+	//Left click hold will save the position that the mouse was clicked and save it.
 	if (left_click == GLFW_PRESS && right_click == GLFW_RELEASE && Window::status == IDLE) {
 		Window::status = LEFT_HOLD;
-		Window::lastPoint = object->trackBallMapping(mouse_position);
+		Window::lastPoint = mouse_position;//Set it to trackball coordinates.
 	}
+	//Right click hold will save the position that the mouse was clicked and save it.
 	else if (right_click == GLFW_PRESS && left_click == GLFW_RELEASE && Window::status == IDLE) {
 		Window::status = RIGHT_HOLD;
+		Window::lastPoint = mouse_position;//Set it to window coordinates.
 	}
+	//If left click is held, then released, reset back to idle.
 	else if (left_click == GLFW_RELEASE && Window::status == LEFT_HOLD) {
 		Window::status = IDLE;
 	}
+	//If right click is held, then released, reset back to idle.
 	else if (right_click == GLFW_RELEASE && Window::status == RIGHT_HOLD) {
 		Window::status = IDLE;
 	}

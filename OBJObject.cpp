@@ -31,9 +31,9 @@ void OBJObject::parse(const char *filepath)
 {
 	//Initialize min, max, scale values for each coordinate.
 	float minX, minY, minZ, maxX, maxY, maxZ, avgX, avgY, avgZ, scale_v;
-	minX = INFINITY, minY = INFINITY, minZ = INFINITY;
-	maxX = -INFINITY, maxY = -INFINITY, maxZ = -INFINITY;
-	scale_v = -INFINITY;
+	minX = INFINITY, minY = INFINITY, minZ = INFINITY;//Minimum set to infinity so first value is always inputted.
+	maxX = -INFINITY, maxY = -INFINITY, maxZ = -INFINITY;//Maximum set to -infinity so first value is always inputted.
+	scale_v = -INFINITY;//Same for scale, used to find "max" scale or the longest axis. This ensures the ranges of vertices are [-1, 1].
 	//Open the file for reading called objFile.
 	std::FILE * objFile = fopen(filepath, "r");
 	if (objFile == NULL) return;
@@ -64,7 +64,7 @@ void OBJObject::parse(const char *filepath)
 			continue;
 		}
 		//Read in lines that start with "f". Add into indices.
-		if (strcmp(buf, "f") == 0) {
+		if (strcmp(buf, "f") == 0) {//Note: Read only left or right side since they are identical on both sides.
 			unsigned int faces_v[3], faces_vn[3];
 			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &faces_v[0], &faces_vn[0], &faces_v[1], &faces_vn[1], &faces_v[2], &faces_vn[2]);
 			indices.push_back(faces_v[0] - 1);
@@ -168,7 +168,7 @@ glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is
 	trackball_p.x = (float)((2.0*point.x - Window::width) / Window::width);   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1
 	trackball_p.y = (float)((Window::height - 2.0*point.y) / Window::height);   // this does the equivalent to the above for the mouse Y position
 	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below
-	depth = (float)trackball_p.length();    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin)
+	depth = (float)glm::length(trackball_p);    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin).
 	depth = (float)((depth<1.0) ? depth : 1.0);   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line
 	trackball_p.z = (float)(sqrtf((float)1.001 - (float)(depth*depth)));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1
 	trackball_p = glm::normalize(trackball_p); // Still need to normalize, since we only capped d, not v.
@@ -179,16 +179,23 @@ glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is
 void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
-	float velocity = (float)direction.length();
+	float velocity = (float)glm::length(direction);
 	if (velocity > 0.0001) 
 	{
 		//Calculate Rotation Axis.
-		glm::vec3 rotateAxis = glm::cross(v, w);
-		glm::vec3 rotAxis = glm::vec3(rotateAxis.x, rotateAxis.y, 0.0f);
+		glm::vec3 rotAxis = glm::cross(v, w);
 		//Calculate Rotation Angle.
 		float rot_angle = acos(glm::dot(v, w));
 		//Calculate Rotation.
 		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
 		this->toWorld = rotate*this->toWorld;
 	}
+}
+
+void OBJObject::translate(glm::vec3 v, glm::vec3 w)
+{
+	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
+	translate_v *= (float)(1 / 100.0);
+	printf("translate: %f %f %f\n", translate_v.x, translate_v.y, translate_v.z);
+	this->toWorld = glm::translate(this->toWorld, translate_v);
 }
