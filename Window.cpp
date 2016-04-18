@@ -218,3 +218,9 @@ void Window::cursor_button_callback(GLFWwindow* window, int button, int action, 
 		Window::status = IDLE;
 	}
 }
+
+/* Handle mouse scroll input. */
+void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	object->zoom(yoffset);
+}

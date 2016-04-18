@@ -47,6 +47,7 @@ public:
 	glm::vec3 trackBallMapping(glm::vec3 point);
 	void rotate(glm::vec3 v, glm::vec3 w);
 	void translate(glm::vec3 v, glm::vec3 w);
+	void zoom(double y);
 
 	void left();
 	void right();

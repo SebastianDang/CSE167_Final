@@ -195,7 +195,15 @@ void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
 void OBJObject::translate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
-	translate_v *= (float)(1 / 100.0);
-	printf("translate: %f %f %f\n", translate_v.x, translate_v.y, translate_v.z);
-	this->toWorld = glm::translate(this->toWorld, translate_v);
+	translate_v *= (float)(1 / (float)Window::width);//Scale the translation.
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), translate_v);
+	this->toWorld = translate*this->toWorld;
+}
+
+void OBJObject::zoom(double y) 
+{
+	glm::vec3 translate_v = glm::vec3(0.0f, 0.0f, y);//Translate only in the Y coordinate.
+	translate_v *= (float)(1 / (float)2);//Scale the translation.
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), translate_v);
+	this->toWorld = translate*this->toWorld;
 }
