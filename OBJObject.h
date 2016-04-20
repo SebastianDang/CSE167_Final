@@ -7,14 +7,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-/* Vertex: [X, Y, Z] [R, G, B] [S, T] */
+/* Container: [X, Y, Z] [R, G, B] [S, T] */
 struct Container {
 	// Position
-	glm::vec3 Vertex;
+	glm::vec3 vertex;
 	// Normal (Color)
-	glm::vec3 Normal;
+	glm::vec3 normal;
 	// TexCoords
-	glm::vec2 TexCoords;
+	glm::vec2 texCoords;
 };
 
 struct Texture {
