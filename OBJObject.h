@@ -14,12 +14,26 @@ struct Container {
 	// Normal (Color)
 	glm::vec3 normal;
 	// TexCoords
-	glm::vec2 texCoords;
+	glm::vec2 texCoord;
 };
 
 struct Texture {
 	GLuint id;
 	std::string type;
+};
+
+struct Material {
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float shininess;
+};
+
+struct DirLight {
+	glm::vec3 direction;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
 };
 
 class OBJObject

@@ -96,7 +96,7 @@ void OBJObject::parse(const char *filepath)
 		Container container;
 		container.vertex = vertices[i];
 		container.normal = normals[i];
-		container.texCoords = glm::vec2(0.0f, 0.0f);
+		container.texCoord = glm::vec2(0.0f, 0.0f);
 		containers.push_back(container);
 	}
 }
@@ -130,7 +130,7 @@ void OBJObject::setupObject()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, normal));
 	//Vertex Texture Coords.
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, texCoords));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, texCoord));
 
 	//Unbind.
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind.
@@ -140,21 +140,35 @@ void OBJObject::setupObject()
 /* Render the object in modern openGL using a shader program. */
 void OBJObject::draw(GLuint shaderProgram)
 {
-	// Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices
+	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
 	glm::mat4 MVP = Window::P * Window::V * toWorld;
-	// We need to calculate this because as of GLSL version 1.40 (OpenGL 3.1, released March 2009), gl_ModelViewProjectionMatrix has been
-	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
+	glm::mat4 model = this->toWorld;
+	glm::mat4 view = Window::V;
+	glm::mat4 projection = Window::P;
+	//Set MVP for the shader.
 	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	//Set individual components for shader calculations.
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
 
+	//Set Materials.
+	glm::vec4 ambient = glm::vec4(0.24725f, 0.2245f, 0.0645f, 1.0f);
+	glm::vec4 diffuse = glm::vec4(0.34615f, 0.3143f, 0.0903f, 1.0f);
+	glm::vec4 specular = glm::vec4(0.797357f, 0.723991f, 0.208006f, 1.0f);
+	float shininess = 83.2;
 
+	glUniform4fv(glGetUniformLocation(shaderProgram, "material.ambient"), 1, &ambient[0]);
+	glUniform4fv(glGetUniformLocation(shaderProgram, "material.diffuse"), 1, &diffuse[0]);
+	glUniform4fv(glGetUniformLocation(shaderProgram, "material.specular"), 1, &specular[0]);
+	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), shininess);
 
-
-
-
-
-
-
+	//Directional Light
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), 0.3f, 0.24f, 0.14f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 0.7f, 0.42f, 0.26f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), 0.5f, 0.5f, 0.5f);
 
 
 	glBindVertexArray(this->VAO);
