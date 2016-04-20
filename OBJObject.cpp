@@ -153,22 +153,54 @@ void OBJObject::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
 
-	//Set Materials.
-	glm::vec4 ambient = glm::vec4(0.24725f, 0.2245f, 0.0645f, 1.0f);
-	glm::vec4 diffuse = glm::vec4(0.34615f, 0.3143f, 0.0903f, 1.0f);
-	glm::vec4 specular = glm::vec4(0.797357f, 0.723991f, 0.208006f, 1.0f);
-	float shininess = 83.2;
+	//Setup the fragment shader.
 
-	glUniform4fv(glGetUniformLocation(shaderProgram, "material.ambient"), 1, &ambient[0]);
-	glUniform4fv(glGetUniformLocation(shaderProgram, "material.diffuse"), 1, &diffuse[0]);
-	glUniform4fv(glGetUniformLocation(shaderProgram, "material.specular"), 1, &specular[0]);
-	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), shininess);
+	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), 0.0f, 0.0f, 20.0f);
+
+	//Setup the material.
+	/* Polished gold 
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.24725f, 0.2245f, 0.0645f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.34615f, 0.3143f, 0.0903f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.797357f, 0.723991f, 0.208006f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 83.2f);
+	*/
+	/* Obsidian 
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.05375f, 0.05f, 0.06625f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.18275f, 0.17f, 0.22525f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.332741f, 0.328634f, 0.346435f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 38.4f);
+	*/ 
+	/* Jade */
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.135f, 0.2225f, 0.1575f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.54f, 0.89f, 0.63f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.316228f, 0.316228f, 0.316228f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 12.8f);
 
 	//Directional Light
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), 0.3f, 0.24f, 0.14f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 0.7f, 0.42f, 0.26f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), 0.5f, 0.5f, 0.5f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	glBindVertexArray(this->VAO);

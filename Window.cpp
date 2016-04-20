@@ -118,7 +118,6 @@ void Window::display_callback(GLFWwindow* window)
 	glUseProgram(shaderProgram);
 	
 	// Render the cube
-	//cube->draw(shaderProgram);
 	object->draw(shaderProgram);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
