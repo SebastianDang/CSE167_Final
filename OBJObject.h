@@ -8,9 +8,9 @@
 #include <vector>
 
 /* Vertex: [X, Y, Z] [R, G, B] [S, T] */
-struct Vertex {
+struct Container {
 	// Position
-	glm::vec3 Position;
+	glm::vec3 Vertex;
 	// Normal (Color)
 	glm::vec3 Normal;
 	// TexCoords
@@ -25,10 +25,12 @@ struct Texture {
 class OBJObject
 {
 private:
+	std::vector<Container> containers;
 	std::vector<glm::vec3> vertices;//v
 	std::vector<glm::vec3> normals;//vn
 	std::vector<unsigned int> indices;//f
 	std::vector<Texture> textures;//List of textures
+	
 	glm::mat4 toWorld;
 
 	GLuint VAO, VBO, EBO;
@@ -43,18 +45,11 @@ public:
 	void scaleUp();
 	void scaleDown();
 	void reset();
-
 	glm::vec3 trackBallMapping(glm::vec3 point);
 	void rotate(glm::vec3 v, glm::vec3 w);
 	void translate(glm::vec3 v, glm::vec3 w);
 	void zoom(double y);
 
-	void left();
-	void right();
-	void up();
-	void down();
-	void in();
-	void out();
 };
 
 #endif

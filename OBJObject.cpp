@@ -92,6 +92,13 @@ void OBJObject::parse(const char *filepath)
 		vertices[i].y = vertices[i].y - avgY;
 		vertices[i].z = vertices[i].z - avgZ;
 		vertices[i] *= (1 / (scale_v));
+		
+		//Throw everything into a container to hold all values
+		Container container;
+		container.Vertex = vertices[i];
+		container.Normal = normals[i];
+		container.TexCoords = glm::vec2(0.0f, 0.0f);
+		containers.push_back(container);
 	}
 }
 
@@ -108,7 +115,7 @@ void OBJObject::setupObject()
 	glBindVertexArray(VAO); // Bind vertex array object
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind vertex buffer
-	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(glm::vec3), &this->vertices[0], GL_STATIC_DRAW); // Set vertex buffer to vertices
+	glBufferData(GL_ARRAY_BUFFER, this->containers.size() * sizeof(Container), &this->containers[0], GL_STATIC_DRAW); // Set vertex buffer to vertices
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Bind indices buffer 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
@@ -119,8 +126,14 @@ void OBJObject::setupObject()
 		3, //This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component).
 		GL_FLOAT, //What type these components are.
 		GL_FALSE, //GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't.
-		sizeof(glm::vec3), //Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between.
+		sizeof(Container), //Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between.
 		(GLvoid*)0); //Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+	// Vertex Normals
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, Normal));
+	// Vertex Texture Coords
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, TexCoords));
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind.
 	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
@@ -135,6 +148,17 @@ void OBJObject::draw(GLuint shaderProgram)
 	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
 	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+
+
+
+
+
+
+
+
+
+
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
