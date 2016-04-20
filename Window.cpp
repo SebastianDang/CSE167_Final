@@ -33,9 +33,15 @@ glm::mat4 Window::V;
 void Window::initialize_objects()
 {
 	Window::status = IDLE;
+	//Initialize Bunny, set it to gold.
 	objectF1 = new OBJObject("bunny.obj");
+	objectF1->material = 1;
+	//Initialize Bear, set it to Obsidian.
 	objectF2 = new OBJObject("abear.obj");
+	objectF2->material = 2;
+	//Initialize Dragon, set it to Jade.
 	objectF3 = new OBJObject("adragon.obj");
+	objectF3->material = 3;
 	object = objectF1;//Default with the bunny.
 	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
 	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
@@ -112,6 +118,7 @@ void Window::idle_callback()
 void Window::display_callback(GLFWwindow* window)
 {
 	// Clear the color and depth buffers
+	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Use the shader of programID
@@ -165,6 +172,21 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		if (key == GLFW_KEY_R)
 		{
 			object->reset();
+		}
+		//Check for '1'.
+		if (key == GLFW_KEY_1)
+		{
+			object->light_selection = 1;
+		}
+		//Check for '2'.
+		if (key == GLFW_KEY_2)
+		{
+			object->light_selection = 2;
+		}
+		//Check for '3'.
+		if (key == GLFW_KEY_3)
+		{
+			object->light_selection = 3;
 		}
 	}
 }

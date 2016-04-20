@@ -12,6 +12,7 @@ OBJObject::OBJObject(const char *filepath)
 {
 	//Initialize World
 	this->toWorld = glm::mat4(1.0f);
+	this->material = 0;
 	//Parse the object @ filepath.
 	this->parse(filepath);
 	//Setup the object.
@@ -152,60 +153,101 @@ void OBJObject::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
-
+	//Setup the material.
+	setupMaterial(shaderProgram, this->material);
+	//Setup the lighting.
+	setupLighting(shaderProgram);
+	selectLighting(shaderProgram, this->light_selection);
 	//Setup the fragment shader.
-
 	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), 0.0f, 0.0f, 20.0f);
 
-	//Setup the material.
-	/* Polished gold 
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.24725f, 0.2245f, 0.0645f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.34615f, 0.3143f, 0.0903f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.797357f, 0.723991f, 0.208006f);
-	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 83.2f);
-	*/
-	/* Obsidian 
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.05375f, 0.05f, 0.06625f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.18275f, 0.17f, 0.22525f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.332741f, 0.328634f, 0.346435f);
-	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 38.4f);
-	*/ 
-	/* Jade */
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.135f, 0.2225f, 0.1575f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.54f, 0.89f, 0.63f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.316228f, 0.316228f, 0.316228f);
-	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 12.8f);
 
-	//Directional Light
+
+
+
+
+
+	//Bind for rendering.
+	glBindVertexArray(this->VAO);
+	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
+void OBJObject::setupMaterial(GLuint shaderProgram, int selection)
+{
+	if(selection == 1)
+	{	/* Polished gold */
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.24725f, 0.2245f, 0.0645f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.34615f, 0.3143f, 0.0903f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.797357f, 0.723991f, 0.208006f);
+		glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 83.2f);
+	}
+	else if (selection == 2)
+	{   /* Obsidian */
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.05375f, 0.05f, 0.06625f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.18275f, 0.17f, 0.22525f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.332741f, 0.328634f, 0.346435f);
+		glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 38.4f);
+	}
+	else if (selection == 3)
+	{	/* Jade */
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.135f, 0.2225f, 0.1575f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.54f, 0.89f, 0.63f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.316228f, 0.316228f, 0.316228f);
+		glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 12.8f);
+	}
+	else 
+	{	/* None selected, set to black */
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 0.0f, 0.0f, 0.0f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 0.01f, 0.01f, 0.01f);
+		glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
+		glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 32);
+	}
+}
+
+void OBJObject::setupLighting(GLuint shaderProgram) 
+{
+	/* Directional Light */
+	glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), 1);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), 1.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 1.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
+	/* Point light */
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), 0.0f, 0.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.ambient"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.diffuse"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.specular"), 1.0f, 1.0f, 1.0f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.quadratic"), 0.032f);
+	/* Spot light */
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.position"), 0.0f, 0.0f, 10.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.ambient"), 0.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.diffuse"), 0.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.specular"), 0.0f, 1.0f, 1.0f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.quadratic"), 0.032f);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	glBindVertexArray(this->VAO);
-	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+/* Select which light to be on when pressing 1, 2, 3. */
+void OBJObject::selectLighting(GLuint shaderProgram, int selection)
+{
+	if (selection == 1)
+	{	//Turn on Directional Light.
+		glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), 1);
+		glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), 0);
+		glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.on"), 0);
+	}
+	else if (selection == 2)
+	{	//Turn on Point Light.
+		glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), 0);
+		glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), 1);
+		glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.on"), 0);
+	}
+	else if (selection == 3)
+	{	//Turn on Spot Light.
+		glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), 0);
+		glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), 0);
+		glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.on"), 1);
+	}
 }
 
 /* Scale the object up. */

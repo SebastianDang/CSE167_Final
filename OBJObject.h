@@ -22,20 +22,6 @@ struct Texture {
 	std::string type;
 };
 
-struct Material {
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-	float shininess;
-};
-
-struct DirLight {
-	glm::vec3 direction;
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-};
-
 class OBJObject
 {
 private:
@@ -49,13 +35,20 @@ private:
 
 	GLuint VAO, VBO, EBO;
 	void setupObject();
+	void setupLights();
 
 public:
 	OBJObject(const char* filepath);
 	~OBJObject();
 
+	int material;
+	int light_selection;
+
 	void parse(const char* filepath);
 	void draw(GLuint shaderProgram);
+	void setupMaterial(GLuint shaderProgram, int selection);
+	void setupLighting(GLuint shaderProgram);
+	void selectLighting(GLuint shaderProgram, int selection);
 	void scaleUp();
 	void scaleDown();
 	void reset();
