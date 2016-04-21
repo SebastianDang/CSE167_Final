@@ -214,17 +214,22 @@ void OBJObject::setupLighting(GLuint shaderProgram)
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), 1.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), 1.0f, 1.0f, 1.0f);
 	/* Point light */
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), 0.0f, 0.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), 0.0f, 0.0f, 10.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.ambient"), 1.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.diffuse"), 1.0f, 1.0f, 1.0f);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.specular"), 1.0f, 1.0f, 1.0f);
 	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.quadratic"), 0.032f);
 	/* Spot light */
 	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.position"), 0.0f, 0.0f, 10.0f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.ambient"), 0.0f, 1.0f, 1.0f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.diffuse"), 0.0f, 1.0f, 1.0f);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.specular"), 0.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.ambient"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.diffuse"), 1.0f, 1.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.specular"), 1.0f, 1.0f, 1.0f);
 	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.quadratic"), 0.032f);
+	
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.direction"), 0.0f, 0.0f, -1.0f);
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotCutoff"), (140.0f / 180.0f * glm::pi<float>()));
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotExponent"), 1.0f);
+
 }
 
 /* Select which light to be on when pressing 1, 2, 3. */
