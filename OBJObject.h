@@ -22,6 +22,44 @@ struct Texture {
 	std::string type;
 };
 
+//Setup the object's material.
+struct Material {
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float shininess;
+};
+
+//Setup the different light sources.
+struct DirLight {//Directional Light
+	bool on;
+	glm::vec3 direction;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
+struct PointLight {//Point Light
+	bool on;
+	glm::vec3 position;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float quadratic;
+};
+
+struct SpotLight {//Spot Light
+	bool on;
+	glm::vec3 position;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float quadratic;
+	glm::vec3 direction;
+	float spotCutoff;
+	float spotExponent;
+};
+
 class OBJObject
 {
 private:
@@ -35,20 +73,28 @@ private:
 
 	GLuint VAO, VBO, EBO;
 	void setupObject();
-	void setupLights();
-
-public:
-	OBJObject(const char* filepath);
-	~OBJObject();
+	void setupMaterial();
+	void setupLighting();
 
 	int material;
+
+	DirLight dirLight;
+	PointLight pointLight;
+	SpotLight spotLight;
+	Material objMaterial;
+
+public:
+	OBJObject(const char* filepath, int material);
+	~OBJObject();
+
 	int light_selection;
+	glm::vec3 viewPosition;
 
 	void parse(const char* filepath);
 	void draw(GLuint shaderProgram);
-	void setupMaterial(GLuint shaderProgram, int selection);
-	void setupLighting(GLuint shaderProgram);
-	void selectLighting(GLuint shaderProgram, int selection);
+	void updateMaterial(GLuint shaderProgram);
+	void updateLighting(GLuint shaderProgram);
+	void updateSelectLighting();
 	void scaleUp();
 	void scaleDown();
 	void reset();
@@ -56,7 +102,6 @@ public:
 	void rotate(glm::vec3 v, glm::vec3 w);
 	void translate(glm::vec3 v, glm::vec3 w);
 	void zoom(double y);
-
 };
 
 #endif

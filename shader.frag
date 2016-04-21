@@ -86,7 +86,7 @@ vec3 CalcDirLight(DirLight dirLight, vec3 norm, vec3 viewDir)
 	//Calculate Ambient: Ka * La
 	vec3 l_ambient = material.ambient * dirLight.ambient;
 
-	//Calculate Diffuse: Kd * Ld * max (0, n * l)
+	//Calculate Diffuse: Kd * Ld * max (0, n dot l)
     vec3 lightDir = normalize(-dirLight.direction);//No calculation, just the light direction.
     float maxDiffuse = max(0.0, dot(norm, lightDir));
 	vec3 l_diffuse = material.diffuse * dirLight.diffuse * maxDiffuse;
@@ -105,7 +105,7 @@ vec3 CalcPointLight(PointLight pointLight, vec3 norm, vec3 fragPos, vec3 viewDir
 	//Calculate Ambient: Ka * La
 	vec3 l_ambient = material.ambient * pointLight.ambient;
 
-	//Calculate Diffuse: (1/(c * (d^2))) * [Kd * Ld * max (0, n * l)]
+	//Calculate Diffuse: Kd * Ld * max (0, n dot l)
 	vec3 lightDir = normalize(pointLight.position - fragPos);//Point light - vertex point.
 	float maxDiffuse = max(0.0, dot(norm, lightDir));
 	vec3 l_diffuse = material.diffuse * pointLight.diffuse * maxDiffuse;
@@ -115,7 +115,7 @@ vec3 CalcPointLight(PointLight pointLight, vec3 norm, vec3 fragPos, vec3 viewDir
 	float maxSpecular = max(0.0, dot(reflectDir, viewDir));
     vec3 l_specular = material.specular * pointLight.specular * pow(maxSpecular, material.shininess);
 
-    //Attenuation
+    //Attenuation: (1/(c * (d^2))), multiply it with diffuse and specular components. 
     float distance = length(pointLight.position - fragPos);
     float attenuation = 1.0f / (pointLight.quadratic * (distance * distance));    
 
@@ -131,7 +131,7 @@ vec3 CalcSpotLight(SpotLight spotLight, vec3 norm, vec3 fragPos, vec3 viewDir)
 	//Calculate Ambient: Ka * La
 	vec3 l_ambient = material.ambient * spotLight.ambient;
 
-	//Calculate Diffuse: ( ((spot_dir * -l) ^ spot_exp) / (c * (d^2)) ) * [Kd * Ld * max (0, n * l)]
+	//Calculate Diffuse: Kd * Ld * max (0, n dot l)
 	vec3 lightDir = normalize(spotLight.position - fragPos);
 	float maxDiffuse = max(0.0, dot(norm, lightDir));
 	vec3 l_diffuse = material.diffuse * spotLight.diffuse * maxDiffuse;
@@ -141,22 +141,22 @@ vec3 CalcSpotLight(SpotLight spotLight, vec3 norm, vec3 fragPos, vec3 viewDir)
 	float maxSpecular = max(0.0, dot(reflectDir, viewDir));
     vec3 l_specular = material.specular * spotLight.specular * pow(maxSpecular, material.shininess);
 
-	//Attenuation
+	//Attenuation: (1/(c * (d^2))), multiply it with diffuse and specular components. 
     float distance = length(spotLight.position - fragPos);
     float attenuation = 1.0f / (spotLight.quadratic * (distance * distance));
-	
-	
-	    
 
-	//Spotlight Intensity
-    float theta = dot(lightDir, normalize(-spotLight.direction)); 
-    float epsilon = spotLight.spotCutoff;
-    float intensity = clamp(theta / epsilon, 0.0, 1.0);
+	//Spotlight Intensity: (spot_dir * -l) ^ spot_exp). Use Direction, Spot Cutoff, Spot Exponent. Use theta equation.
+    float cutoff = dot(-lightDir, normalize(spotLight.direction)); 
+	float theta = acos(cutoff);
+	float intensity = pow(cutoff, spotLight.spotExponent);
 
+	if(theta > spotLight.spotCutoff)
+	{
+		return l_ambient;
+	}
 
 	l_diffuse *= attenuation * intensity;
 	l_specular *= attenuation * intensity;
-
-
+	
    	return (l_ambient + l_diffuse + l_specular);
 }
