@@ -102,6 +102,11 @@ public:
 	void rotate(glm::vec3 v, glm::vec3 w);
 	void translate(glm::vec3 v, glm::vec3 w);
 	void zoom(double y);
+
+	void light_sharpen();
+	void light_blur();
+
+
 };
 
 #endif

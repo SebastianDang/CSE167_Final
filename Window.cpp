@@ -138,9 +138,13 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
 	//Define 's' key.
 	int sKey = glfwGetKey(window, GLFW_KEY_S);
+	int eKey = glfwGetKey(window, GLFW_KEY_E);
 	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
 	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->scaleUp();
 	else if (sKey == GLFW_PRESS) object->scaleDown();
+	//Callback for 'e'/'E':
+	if (eKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->light_blur();
+	else if (eKey == GLFW_PRESS) object->light_sharpen();
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
@@ -184,6 +188,11 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		if (key == GLFW_KEY_3)
 		{
 			object->light_selection = 3;
+		}
+		//Check for '0'
+		if (key == GLFW_KEY_0)
+		{
+
 		}
 	}
 }

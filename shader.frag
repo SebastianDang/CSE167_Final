@@ -150,13 +150,13 @@ vec3 CalcSpotLight(SpotLight spotLight, vec3 norm, vec3 fragPos, vec3 viewDir)
 	float theta = acos(cutoff);
 	float intensity = pow(cutoff, spotLight.spotExponent);
 
+	l_diffuse *= attenuation * intensity;
+	l_specular *= attenuation * intensity;
+
 	if(theta > spotLight.spotCutoff)
 	{
 		return l_ambient;
 	}
 
-	l_diffuse *= attenuation * intensity;
-	l_specular *= attenuation * intensity;
-	
    	return (l_ambient + l_diffuse + l_specular);
 }

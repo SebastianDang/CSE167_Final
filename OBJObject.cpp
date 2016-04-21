@@ -193,14 +193,14 @@ void OBJObject::setupLighting()
 	this->pointLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->pointLight.quadratic = 0.032f;
 	//SpotLight
-	this->spotLight.on = 1;
+	this->spotLight.on = 0;
 	this->spotLight.position = glm::vec3(0.0f, 0.0f, 10.0f);
 	this->spotLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.quadratic = 0.032f;//0.032
 	this->spotLight.direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	this->spotLight.spotCutoff = (24.0f / 180.0f * glm::pi<float>());
+	this->spotLight.spotCutoff = (30.0f / 180.0f * glm::pi<float>());
 	this->spotLight.spotExponent = 1.0f;
 }
 
@@ -267,7 +267,6 @@ void OBJObject::updateLighting(GLuint shaderProgram)
 	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.direction"), spotLight.direction.x, spotLight.direction.y, spotLight.direction.z);
 	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotCutoff"), spotLight.spotCutoff);
 	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotExponent"), spotLight.spotExponent);
-
 }
 
 /* Select which light to be on when pressing 1, 2, 3. */
@@ -362,3 +361,25 @@ void OBJObject::zoom(double y)
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), translate_v);
 	this->toWorld = translate*this->toWorld;
 }
+
+void OBJObject::light_sharpen()
+{
+	if (spotLight.spotExponent >= 1.0)
+	{
+		spotLight.spotExponent -= 1.0;
+	}
+	else
+		spotLight.spotExponent = 0.5;
+}
+void OBJObject::light_blur()
+{
+	if (spotLight.spotExponent <= 100.0)
+	{
+		spotLight.spotExponent += 1.0;
+	}
+	else
+		spotLight.spotExponent = 100.0;
+}
+
+
+
