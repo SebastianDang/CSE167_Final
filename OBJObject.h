@@ -99,10 +99,23 @@ public:
 	void scaleDown();
 	void reset();
 	glm::vec3 trackBallMapping(glm::vec3 point);
+
+	/* Mouse Control */
 	void rotate(glm::vec3 v, glm::vec3 w);
 	void translate(glm::vec3 v, glm::vec3 w);
 	void zoom(double y);
 
+	/* Directional Light Control*/
+	void dirLight_rotate(glm::vec3 v, glm::vec3 w);
+
+	/* Point Light Control */
+	void pointLight_rotate(glm::vec3 v, glm::vec3 w);
+	void pointLight_scale(double y);
+
+	/* Spot Light Control */
+	void spotLight_rotate(glm::vec3 v, glm::vec3 w);
+	void spotLight_scale(double y);
+	void spotLight_cone(glm::vec3 v, glm::vec3 w);
 	void light_sharpen();
 	void light_blur();
 

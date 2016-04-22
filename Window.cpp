@@ -2,9 +2,16 @@
 
 const char* window_title = "CSE 167 Homework 2";
 
+//Define Mouse control for scroll, click, left hold, right hold
 #define IDLE 0
 #define LEFT_HOLD 1
 #define RIGHT_HOLD 2
+
+//Define mode for controlling the object, or lights.
+#define MOUSE_CONTROL 0
+#define LIGHT_CONTROL1 1
+#define LIGHT_CONTROL2 2
+#define LIGHT_CONTROL3 3
 
 //Default Objects
 OBJObject * object;
@@ -26,6 +33,7 @@ int Window::height;
 double Window::x;
 double Window::y;
 int Window::status;
+int Window::mode;
 glm::vec3 Window::lastPoint;
 glm::mat4 Window::P;
 glm::mat4 Window::V;
@@ -33,6 +41,7 @@ glm::mat4 Window::V;
 void Window::initialize_objects()
 {
 	Window::status = IDLE;
+	Window::mode = 0;
 	//Initialize Bunny, set it to gold.
 	objectF1 = new OBJObject("bunny.obj", 1);
 	//Initialize Bear, set it to Obsidian.
@@ -114,8 +123,8 @@ void Window::idle_callback()
 
 void Window::display_callback(GLFWwindow* window)
 {
-	// Clear the color and depth buffers
-	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//Clear the color and depth buffers
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Use the shader of programID
@@ -133,18 +142,47 @@ void Window::display_callback(GLFWwindow* window)
 /* Handle Key input. */
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	/* Any global key definitions */
 	//Define shift keys for capital letters.
 	int Lshift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
 	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
 	//Define 's' key.
 	int sKey = glfwGetKey(window, GLFW_KEY_S);
 	int eKey = glfwGetKey(window, GLFW_KEY_E);
-	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
-	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->scaleUp();
-	else if (sKey == GLFW_PRESS) object->scaleDown();
-	//Callback for 'e'/'E':
-	if (eKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->light_blur();
-	else if (eKey == GLFW_PRESS) object->light_sharpen();
+
+	/* Mouse control mode */
+	if (mode == MOUSE_CONTROL)
+	{
+		//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
+		if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->scaleUp();
+		else if (sKey == GLFW_PRESS) object->scaleDown();
+		//Check for a single key press (Not holds)
+		if (action == GLFW_PRESS)
+		{	//Check for 'r'.
+			if (key == GLFW_KEY_R)
+			{
+				object->reset();
+			}
+		}
+	}
+	/* Directional Light Control mode */
+	if (mode == LIGHT_CONTROL1)
+	{
+		//Nothing.
+	}
+	/* Point Light Control mode */
+	if (mode == LIGHT_CONTROL2)
+	{
+		//Nothing.
+	}
+	/* Spot Light Control mode */
+	if (mode == LIGHT_CONTROL3)
+	{
+		//Callback for 'e'/'E':
+		if (eKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->light_blur();
+		else if (eKey == GLFW_PRESS) object->light_sharpen();
+	}
+	/* Global Keys */
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
@@ -169,30 +207,28 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		{
 			object = objectF3;
 		}
-		//Check for 'r'.
-		if (key == GLFW_KEY_R)
-		{
-			object->reset();
-		}
 		//Check for '1'.
 		if (key == GLFW_KEY_1)
 		{
+			Window::mode = LIGHT_CONTROL1;
 			object->light_selection = 1;
 		}
 		//Check for '2'.
 		if (key == GLFW_KEY_2)
 		{
+			Window::mode = LIGHT_CONTROL2;
 			object->light_selection = 2;
 		}
 		//Check for '3'.
 		if (key == GLFW_KEY_3)
 		{
+			Window::mode = LIGHT_CONTROL3;
 			object->light_selection = 3;
 		}
 		//Check for '0'
 		if (key == GLFW_KEY_0)
 		{
-
+			Window::mode = MOUSE_CONTROL;
 		}
 	}
 }
@@ -206,16 +242,54 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	Window::y = ypos;
 	//Get current mouse position.
 	glm::vec3 point = glm::vec3(Window::x, Window::y, 0.0f);
-	//On left drag, we perform rotations.
-	if (Window::status == LEFT_HOLD) 
+
+	/* Mouse control mode */
+	if (mode == MOUSE_CONTROL)
 	{
-		object->rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+		//On left drag, we perform rotations.
+		if (Window::status == LEFT_HOLD)
+		{
+			object->rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+		}
+		//On right drag, we perform translations.
+		if (Window::status == RIGHT_HOLD)
+		{
+			object->translate(Window::lastPoint, point);//Set it to window coordinates.
+		}
 	}
-	//On right drag, we perform translations.
-	if (Window::status == RIGHT_HOLD) 
+	/* Directional Light Control mode */
+	if (mode == LIGHT_CONTROL1)
 	{
-		object->translate(Window::lastPoint, point);//Set it to window coordinates.
+		//On left drag, we perform rotations on the light.
+		if (Window::status == LEFT_HOLD)
+		{
+			object->dirLight_rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+		}
 	}
+	/* Point Light Control mode */
+	if (mode == LIGHT_CONTROL2)
+	{
+		//On left drag, we perform rotations on the light.
+		if (Window::status == LEFT_HOLD)
+		{
+			object->pointLight_rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+		}
+	}
+	/* Spot Light Control mode */
+	if (mode == LIGHT_CONTROL3)
+	{
+		//On left drag, we perform rotations on the light.
+		if (Window::status == LEFT_HOLD)
+		{
+			object->spotLight_rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+		}
+		//On right drag, we perform changes in cone, (wider/narrower).
+		if (Window::status == RIGHT_HOLD)
+		{
+			object->spotLight_cone(Window::lastPoint, point);//Set it to window coordinates.
+		}
+	}
+
 }
 
 /* Handle mouse button input. */
@@ -249,5 +323,24 @@ void Window::cursor_button_callback(GLFWwindow* window, int button, int action, 
 /* Handle mouse scroll input. */
 void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	object->zoom(yoffset);
+	/* Mouse control mode */
+	if (mode == MOUSE_CONTROL)
+	{
+		object->zoom(yoffset);
+	}
+	/* Directional Light Control mode */
+	if (mode == LIGHT_CONTROL1) 
+	{
+		//Nothing.
+	}
+	/* Point Light Control mode */
+	if (mode == LIGHT_CONTROL2)
+	{
+		object->pointLight_scale(yoffset);
+	}
+	/* Spot Light Control mode */
+	if (mode == LIGHT_CONTROL3)
+	{
+		object->spotLight_scale(yoffset);
+	}
 }

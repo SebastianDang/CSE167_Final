@@ -179,27 +179,25 @@ void OBJObject::setupLighting()
 {
 	//Directional Light
 	this->dirLight.on = 1;
-	this->pointLight.on = 0;
-	this->spotLight.on = 0;
 	this->dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
 	this->dirLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->dirLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->dirLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	//PointLight
 	this->pointLight.on = 0;
-	this->pointLight.position = glm::vec3(0.0f, 0.0f, 10.0f);
+	this->pointLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
 	this->pointLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->pointLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->pointLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->pointLight.quadratic = 0.032f;
 	//SpotLight
 	this->spotLight.on = 0;
-	this->spotLight.position = glm::vec3(0.0f, 0.0f, 10.0f);
+	this->spotLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
 	this->spotLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->spotLight.quadratic = 0.032f;//0.032
-	this->spotLight.direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	this->spotLight.direction = glm::vec3(-1.0f, -1.0f, -1.0f);
 	this->spotLight.spotCutoff = (30.0f / 180.0f * glm::pi<float>());
 	this->spotLight.spotExponent = 1.0f;
 }
@@ -362,24 +360,111 @@ void OBJObject::zoom(double y)
 	this->toWorld = translate*this->toWorld;
 }
 
+void OBJObject::dirLight_rotate(glm::vec3 v, glm::vec3 w) 
+{
+	glm::vec3 direction = w - v;
+	float velocity = (float)glm::length(direction);
+	if (velocity > 0.0001)
+	{
+		//Calculate Rotation Axis.
+		glm::vec3 rotAxis = glm::cross(v, w);
+		//Calculate Rotation Angle.
+		float rot_angle = acos(glm::dot(v, w));
+		//Calculate Rotation.
+		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
+		glm::mat3 rotate3v = glm::mat3(rotate);
+		this->dirLight.direction = rotate3v*this->dirLight.direction;
+	}
+}
+
+void OBJObject::pointLight_rotate(glm::vec3 v, glm::vec3 w)
+{
+	glm::vec3 direction = w - v;
+	float velocity = (float)glm::length(direction);
+	if (velocity > 0.0001)
+	{
+		//Calculate Rotation Axis.
+		glm::vec3 rotAxis = glm::cross(v, w);
+		//Calculate Rotation Angle.
+		float rot_angle = acos(glm::dot(v, w));
+		//Calculate Rotation.
+		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
+		glm::vec4 position4v = rotate * glm::vec4(pointLight.position.x, pointLight.position.y, pointLight.position.z, 1.0f);
+		glm::vec3 result = glm::vec3(position4v);
+		this->pointLight.position = result;
+	}
+}
+
+void OBJObject::pointLight_scale(double y)
+{
+	float scale = y;
+	if (scale > 0.0f)
+	{
+		scale = SCALE_UP;
+	}
+	else
+	{
+		scale = SCALE_DOWN;
+	}
+	this->pointLight.position = scale * pointLight.position;
+}
+
+void OBJObject::spotLight_rotate(glm::vec3 v, glm::vec3 w)
+{
+	glm::vec3 direction = w - v;
+	float velocity = (float)glm::length(direction);
+	if (velocity > 0.0001)
+	{
+		//Calculate Rotation Axis.
+		glm::vec3 rotAxis = glm::cross(v, w);
+		//Calculate Rotation Angle.
+		float rot_angle = acos(glm::dot(v, w));
+		//Calculate Rotation.
+		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
+		glm::mat3 rotate3v = glm::mat3(rotate);
+		this->spotLight.position = rotate3v*spotLight.position;
+	}
+}
+
+void OBJObject::spotLight_scale(double y)
+{
+	float scale = y;
+	if (scale > 0.0)
+	{
+		scale = SCALE_UP;
+	}
+	else
+	{
+		scale = SCALE_DOWN;
+	}
+	this->spotLight.position = scale * spotLight.position;
+}
+
+void OBJObject::spotLight_cone(glm::vec3 v, glm::vec3 w)
+{
+	float cone = v.y - w.y;
+	cone = glm::clamp(cone, -0.5f, 0.5f);
+	float cone_angle = (cone / 180.0f * glm::pi<float>());
+	this->spotLight.spotCutoff += cone_angle;
+}
+
 void OBJObject::light_sharpen()
 {
-	if (spotLight.spotExponent >= 1.0)
+	if (spotLight.spotExponent >= 0.0f)
 	{
-		spotLight.spotExponent -= 1.0;
+		spotLight.spotExponent -= 0.5f;
 	}
 	else
-		spotLight.spotExponent = 0.5;
+		spotLight.spotExponent = 0.0f;
 }
+
 void OBJObject::light_blur()
 {
-	if (spotLight.spotExponent <= 100.0)
+	if (spotLight.spotExponent <= 1000.0f)
 	{
-		spotLight.spotExponent += 1.0;
+		spotLight.spotExponent += 0.5f;
 	}
 	else
-		spotLight.spotExponent = 100.0;
+		spotLight.spotExponent = 100.0f;
 }
-
-
 
