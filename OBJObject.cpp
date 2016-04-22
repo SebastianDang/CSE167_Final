@@ -143,6 +143,7 @@ void OBJObject::setupObject()
 	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
 }
 
+/* Setup the material of the object. */
 void OBJObject::setupMaterial()
 {
 	if (this->material == 1)
@@ -175,6 +176,7 @@ void OBJObject::setupMaterial()
 	}
 }
 
+/* Setup the lighting for the object. */
 void OBJObject::setupLighting()
 {
 	//Directional Light
@@ -396,6 +398,7 @@ void OBJObject::pointLight_rotate(glm::vec3 v, glm::vec3 w)
 	}
 }
 
+/* Scale the light by it's distance from the center. */
 void OBJObject::pointLight_scale(double y)
 {
 	float scale = y;
@@ -428,6 +431,7 @@ void OBJObject::spotLight_rotate(glm::vec3 v, glm::vec3 w)
 	}
 }
 
+/* Scale the light by it's distance from the center. */
 void OBJObject::spotLight_scale(double y)
 {
 	float scale = y;
@@ -442,16 +446,29 @@ void OBJObject::spotLight_scale(double y)
 	this->spotLight.position = scale * spotLight.position;
 }
 
+/* Adjust the spotlight cone to make the light wider or narrower. */
 void OBJObject::spotLight_cone(glm::vec3 v, glm::vec3 w)
 {
 	float cone = v.y - w.y;
 	cone = glm::clamp(cone, -0.5f, 0.5f);
 	float cone_angle = (cone / 180.0f * glm::pi<float>());
-	this->spotLight.spotCutoff += cone_angle;
+	//Check boundaries.
+	if (cone_angle > glm::pi<float>())
+	{
+		this->spotLight.spotCutoff = glm::pi<float>();
+	}
+	else if (cone_angle < 0.0f)
+	{
+		this->spotLight.spotCutoff = 0.0f;
+	}
+	else
+		this->spotLight.spotCutoff += cone_angle;
 }
 
+/* Sharpen the light to make the spot edges sharp, no blur. */
 void OBJObject::light_sharpen()
 {
+	//Check boundaries.
 	if (spotLight.spotExponent >= 0.0f)
 	{
 		spotLight.spotExponent -= 0.5f;
@@ -460,12 +477,14 @@ void OBJObject::light_sharpen()
 		spotLight.spotExponent = 0.0f;
 }
 
+/* Blur the light to make the spot edges more gradient. */
 void OBJObject::light_blur()
 {
+	//Check boundaries.
 	if (spotLight.spotExponent <= 1000.0f)
 	{
 		spotLight.spotExponent += 0.5f;
 	}
 	else
-		spotLight.spotExponent = 100.0f;
+		spotLight.spotExponent = 1000.0f;
 }

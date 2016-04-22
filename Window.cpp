@@ -45,9 +45,9 @@ void Window::initialize_objects()
 	//Initialize Bunny, set it to gold.
 	objectF1 = new OBJObject("bunny.obj", 1);
 	//Initialize Bear, set it to Obsidian.
-	objectF2 = new OBJObject("abear.obj", 2);
+	objectF2 = new OBJObject("bear.obj", 2);
 	//Initialize Dragon, set it to Jade.
-	objectF3 = new OBJObject("adragon.obj", 3);
+	objectF3 = new OBJObject("dragon.obj", 3);
 	object = objectF1;//Default with the bunny.
 	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
 	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
