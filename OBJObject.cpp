@@ -8,7 +8,7 @@
 #define SCALE_UP 1.2f
 #define SCALE_DOWN 0.8f
 
-OBJObject::OBJObject(const char *filepath, int material) 
+OBJObject::OBJObject(const char *filepath, int material)
 {
 	//Initialize World
 	this->toWorld = glm::mat4(1.0f);
@@ -40,7 +40,7 @@ void OBJObject::parse(const char *filepath)
 	minX = INFINITY, minY = INFINITY, minZ = INFINITY;//Minimum set to infinity so first value is always inputted.
 	maxX = -INFINITY, maxY = -INFINITY, maxZ = -INFINITY;//Maximum set to -infinity so first value is always inputted.
 	scale_v = -INFINITY;//Same for scale, used to find "max" scale or the longest axis. This ensures the ranges of vertices are [-1, 1].
-	//Open the file for reading called objFile.
+						//Open the file for reading called objFile.
 	std::FILE * objFile = fopen(filepath, "r");
 	if (objFile == NULL) return;
 	//Read the file until the end; "# are commments to be ignored".
@@ -122,7 +122,7 @@ void OBJObject::setupObject()
 	glBufferData(GL_ARRAY_BUFFER, this->containers.size() * sizeof(Container), &this->containers[0], GL_STATIC_DRAW); //Set vertex buffer to the Container.
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); //Bind indices buffer.
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
-	
+
 	//Vertex Positions.
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0,//This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
@@ -131,7 +131,7 @@ void OBJObject::setupObject()
 		GL_FALSE, //GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't.
 		sizeof(Container), //Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between.
 		(GLvoid*)0); //Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
-	//Vertex Normals.
+					 //Vertex Normals.
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, normal));
 	//Vertex Texture Coords.
@@ -182,24 +182,24 @@ void OBJObject::setupLighting()
 	//Directional Light
 	this->dirLight.on = 1;
 	this->dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
-	this->dirLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->dirLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->dirLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	this->dirLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	this->dirLight.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+	this->dirLight.specular = glm::vec3(0.8f, 0.8f, 0.8f);
 	//PointLight
 	this->pointLight.on = 0;
 	this->pointLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
-	this->pointLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->pointLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->pointLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	this->pointLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	this->pointLight.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+	this->pointLight.specular = glm::vec3(0.8f, 0.8f, 0.8f);
 	this->pointLight.quadratic = 0.032f;
 	//SpotLight
 	this->spotLight.on = 0;
 	this->spotLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
-	this->spotLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.quadratic = 0.032f;//0.032
-	this->spotLight.direction = glm::vec3(-1.0f, -1.0f, -1.0f);
+	this->spotLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	this->spotLight.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+	this->spotLight.specular = glm::vec3(0.8f, 0.8f, 0.8f);
+	this->spotLight.quadratic = 0.032f;//attenuation
+	this->spotLight.direction = -spotLight.position;
 	this->spotLight.spotCutoff = (30.0f / 180.0f * glm::pi<float>());
 	this->spotLight.spotExponent = 1.0f;
 }
@@ -232,7 +232,7 @@ void OBJObject::draw(GLuint shaderProgram)
 }
 
 /* Update Material if needed with the material struct */
-void OBJObject::updateMaterial(GLuint shaderProgram) 
+void OBJObject::updateMaterial(GLuint shaderProgram)
 {
 	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), objMaterial.ambient.x, objMaterial.ambient.y, objMaterial.ambient.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), objMaterial.diffuse.x, objMaterial.diffuse.y, objMaterial.diffuse.z);
@@ -241,7 +241,7 @@ void OBJObject::updateMaterial(GLuint shaderProgram)
 }
 
 /* Update lighting from the light structs */
-void OBJObject::updateLighting(GLuint shaderProgram) 
+void OBJObject::updateLighting(GLuint shaderProgram)
 {
 	updateSelectLighting();
 	/* Directional Light */
@@ -332,7 +332,7 @@ void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
 	float velocity = (float)glm::length(direction);
-	if (velocity > 0.0001) 
+	if (velocity > 0.0001)
 	{
 		//Calculate Rotation Axis.
 		glm::vec3 rotAxis = glm::cross(v, w);
@@ -354,7 +354,7 @@ void OBJObject::translate(glm::vec3 v, glm::vec3 w)
 }
 
 /* Translate the object in world space (z). */
-void OBJObject::zoom(double y) 
+void OBJObject::zoom(double y)
 {
 	glm::vec3 translate_v = glm::vec3(0.0f, 0.0f, y);//Translate only in the Y coordinate.
 	translate_v *= (float)(1 / (float)2);//Scale the translation.
@@ -363,7 +363,7 @@ void OBJObject::zoom(double y)
 }
 
 /* Rotate the directional light in world space. */
-void OBJObject::dirLight_rotate(glm::vec3 v, glm::vec3 w) 
+void OBJObject::dirLight_rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
 	float velocity = (float)glm::length(direction);
@@ -411,6 +411,8 @@ void OBJObject::pointLight_scale(double y)
 		scale = SCALE_DOWN;
 	}
 	this->pointLight.position = scale * pointLight.position;
+	//Check when point light == 0? Problem?
+	//if (this->pointLight.position <= 0.0){this->pointLight.position += .02f; }
 }
 
 /* Rotate the spot light in world space. */
@@ -444,6 +446,8 @@ void OBJObject::spotLight_scale(double y)
 		scale = SCALE_DOWN;
 	}
 	this->spotLight.position = scale * spotLight.position;
+	//Check when point light == 0? Problem?
+	//if (this->spotLight.position <= 0.0){this->spotLight.position += .02f; }
 }
 
 /* Adjust the spotlight cone to make the light wider or narrower. */
@@ -452,17 +456,17 @@ void OBJObject::spotLight_cone(glm::vec3 v, glm::vec3 w)
 	float cone = v.y - w.y;
 	cone = glm::clamp(cone, -0.5f, 0.5f);
 	float cone_angle = (cone / 180.0f * glm::pi<float>());
+	spotLight.spotCutoff += cone_angle;
 	//Check boundaries.
-	if (cone_angle > glm::pi<float>())
+	if (spotLight.spotCutoff > glm::pi<float>())
 	{
 		this->spotLight.spotCutoff = glm::pi<float>();
 	}
-	else if (cone_angle < 0.0f)
+	if (spotLight.spotCutoff < 0.0f)
 	{
 		this->spotLight.spotCutoff = 0.0f;
 	}
-	else
-		this->spotLight.spotCutoff += cone_angle;
+
 }
 
 /* Sharpen the light to make the spot edges sharp, no blur. */
