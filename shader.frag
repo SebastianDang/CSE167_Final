@@ -106,7 +106,7 @@ vec3 CalcPointLight(PointLight pointLight, vec3 norm, vec3 fragPos, vec3 viewDir
 	vec3 l_ambient = material.ambient * pointLight.ambient;
 
 	//Calculate Diffuse: Kd * Ld * max (0, n dot l)
-	vec3 lightDir = normalize(pointLight.position - fragPos);//Point light - vertex point.
+	vec3 lightDir = normalize(pointLight.position - fragPos);
 	float maxDiffuse = max(0.0, dot(norm, lightDir));
 	vec3 l_diffuse = material.diffuse * pointLight.diffuse * maxDiffuse;
 
@@ -115,12 +115,12 @@ vec3 CalcPointLight(PointLight pointLight, vec3 norm, vec3 fragPos, vec3 viewDir
 	float maxSpecular = max(0.0, dot(reflectDir, viewDir));
     vec3 l_specular = material.specular * pointLight.specular * pow(maxSpecular, material.shininess);
 
-    //Attenuation: (1/(c * (d^2))), multiply it with diffuse and specular components. 
+	//Attenuation: (1/(c * (d^2))), multiply it with diffuse and specular components. 
     float distance = length(pointLight.position - fragPos);
-    float attenuation = 1.0f / (pointLight.quadratic * (distance * distance));    
+    float attenuation = 1.0f / (pointLight.quadratic * (distance * distance));
 
-    l_diffuse *= attenuation;
-    l_specular *= attenuation;
+	l_diffuse *= attenuation;
+	l_specular *= attenuation;
 
 	return (l_ambient + l_diffuse + l_specular);
 }

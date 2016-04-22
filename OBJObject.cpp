@@ -250,7 +250,7 @@ void OBJObject::updateLighting(GLuint shaderProgram)
 	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
 	/* Point light */
 	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), pointLight.on);
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), pointLight.position.y, pointLight.position.y, pointLight.position.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), pointLight.position.x, pointLight.position.y, pointLight.position.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.ambient"), pointLight.ambient.x, pointLight.ambient.y, pointLight.ambient.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.diffuse"), pointLight.diffuse.x, pointLight.diffuse.y, pointLight.diffuse.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.specular"), pointLight.specular.x, pointLight.specular.y, pointLight.specular.z);
@@ -360,6 +360,7 @@ void OBJObject::zoom(double y)
 	this->toWorld = translate*this->toWorld;
 }
 
+/* Rotate the directional light in world space. */
 void OBJObject::dirLight_rotate(glm::vec3 v, glm::vec3 w) 
 {
 	glm::vec3 direction = w - v;
@@ -377,6 +378,7 @@ void OBJObject::dirLight_rotate(glm::vec3 v, glm::vec3 w)
 	}
 }
 
+/* Rotate the point light in world space. */
 void OBJObject::pointLight_rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
@@ -389,9 +391,8 @@ void OBJObject::pointLight_rotate(glm::vec3 v, glm::vec3 w)
 		float rot_angle = acos(glm::dot(v, w));
 		//Calculate Rotation.
 		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
-		glm::vec4 position4v = rotate * glm::vec4(pointLight.position.x, pointLight.position.y, pointLight.position.z, 1.0f);
-		glm::vec3 result = glm::vec3(position4v);
-		this->pointLight.position = result;
+		glm::mat3 rotate3v = glm::mat3(rotate);
+		this->pointLight.position = rotate3v*pointLight.position;
 	}
 }
 
@@ -409,6 +410,7 @@ void OBJObject::pointLight_scale(double y)
 	this->pointLight.position = scale * pointLight.position;
 }
 
+/* Rotate the spot light in world space. */
 void OBJObject::spotLight_rotate(glm::vec3 v, glm::vec3 w)
 {
 	glm::vec3 direction = w - v;
@@ -467,4 +469,3 @@ void OBJObject::light_blur()
 	else
 		spotLight.spotExponent = 100.0f;
 }
-
