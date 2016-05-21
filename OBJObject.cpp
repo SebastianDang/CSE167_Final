@@ -1,19 +1,17 @@
 #include "OBJObject.h"
-#include "Window.h"
-#include <iostream>
-#include <fstream>
 
 #define DEBUG 0
 #define MOVE_STEP 1.0f
 #define SCALE_UP 1.2f
 #define SCALE_DOWN 0.8f
+#define SPOT_CUTOFF 30.0f
 
+/* Initialize the object, parse it and set up buffers. */
 OBJObject::OBJObject(const char *filepath, int material) 
 {
 	//Initialize World
-	this->toWorld = glm::mat4(1.0f);
-	this->material = material;
-	this->viewPosition = glm::vec3(0.0f, 0.0f, 20.0f);
+	this->toWorld = glm::mat4(1.0f);//Default at the origin.
+	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);
 	//Setup the object.
@@ -22,11 +20,14 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->setupMaterial();
 	//Setup the lighting.
 	this->setupLighting();
+	//Setup the Camera.
+	this->setupCamera();
 }
 
+/* Deconstructor to safely delete when finished. */
 OBJObject::~OBJObject()
 {
-	// Properly de-allocate all resources once they've outlived their purpose
+	//Properly de-allocate all resources once they've outlived their purpose.
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
@@ -120,6 +121,7 @@ void OBJObject::setupObject()
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); //Bind Container buffer.
 	glBufferData(GL_ARRAY_BUFFER, this->containers.size() * sizeof(Container), &this->containers[0], GL_STATIC_DRAW); //Set vertex buffer to the Container.
+	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); //Bind indices buffer.
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(int), &this->indices[0], GL_STATIC_DRAW);
 	
@@ -131,9 +133,11 @@ void OBJObject::setupObject()
 		GL_FALSE, //GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't.
 		sizeof(Container), //Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between.
 		(GLvoid*)0); //Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+
 	//Vertex Normals.
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, normal));
+	
 	//Vertex Texture Coords.
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, texCoord));
@@ -143,6 +147,7 @@ void OBJObject::setupObject()
 	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
 }
 
+/* Setup the material of the object. We can define different materials here as well! */
 void OBJObject::setupMaterial()
 {
 	if (this->material == 1)
@@ -166,107 +171,71 @@ void OBJObject::setupMaterial()
 		this->objMaterial.specular = glm::vec3(0.316228f, 0.316228f, 0.316228f);
 		this->objMaterial.shininess = 12.8f;
 	}
+	else if (this->material == 4)
+	{   /* Red Obsidian */
+		this->objMaterial.ambient = glm::vec3(1.0f, 0.0f, 0.0f);
+		this->objMaterial.diffuse = glm::vec3(0.18275f, 0.17f, 0.22525f);
+		this->objMaterial.specular = glm::vec3(0.332741f, 0.328634f, 0.346435f);
+		this->objMaterial.shininess = 38.4f;
+	}
 	else
 	{	/* None selected, set to black */
-		this->objMaterial.ambient = glm::vec3(0.0f, 0.0f, 0.0f);
+		this->objMaterial.ambient = glm::vec3(1.0f, 0.0f, 0.0f);
 		this->objMaterial.diffuse = glm::vec3(0.01f, 0.01f, 0.01f);
 		this->objMaterial.specular = glm::vec3(0.5f, 0.5f, 0.5f);
 		this->objMaterial.shininess = 32.0f;
 	}
 }
 
+/* Setup the lighting for the object. */
 void OBJObject::setupLighting()
 {
 	//Directional Light
 	this->dirLight.on = 1;
-	this->pointLight.on = 0;
-	this->spotLight.on = 0;
 	this->dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
 	this->dirLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->dirLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->dirLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 	//PointLight
 	this->pointLight.on = 0;
-	this->pointLight.position = glm::vec3(0.0f, 0.0f, 10.0f);
-	this->pointLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->pointLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->pointLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	this->pointLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
+	this->pointLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	this->pointLight.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+	this->pointLight.specular = glm::vec3(0.8f, 0.8f, 0.8f);
 	this->pointLight.quadratic = 0.032f;
 	//SpotLight
 	this->spotLight.on = 0;
-	this->spotLight.position = glm::vec3(0.0f, 0.0f, 10.0f);
-	this->spotLight.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->spotLight.quadratic = 0.032f;//0.032
-	this->spotLight.direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	this->spotLight.spotCutoff = (30.0f / 180.0f * glm::pi<float>());
+	this->spotLight.position = glm::vec3(10.0f, 10.0f, 10.0f);
+	this->spotLight.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	this->spotLight.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+	this->spotLight.specular = glm::vec3(0.8f, 0.8f, 0.8f);
+	this->spotLight.quadratic = 0.032f;//attenuation
+	this->spotLight.direction = -spotLight.position;//This ensures that the spotlight is always pointing at the origin (position away from the origin).
+	this->spotLight.spotCutoff = (SPOT_CUTOFF / 180.0f * glm::pi<float>());
 	this->spotLight.spotExponent = 1.0f;
 }
 
-/* Render the object in modern openGL using a shader program. */
-void OBJObject::draw(GLuint shaderProgram)
-{
-	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
-	glm::mat4 MVP = Window::P * Window::V * toWorld;
-	glm::mat4 model = this->toWorld;
-	glm::mat4 view = Window::V;
-	glm::mat4 projection = Window::P;
-	//Set MVP for the shader.
-	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	//Set individual components for shader calculations.
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
-	//Update the viewPosition.
-	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), viewPosition.x, viewPosition.y, viewPosition.z);
-	//Update the material.
-	updateMaterial(shaderProgram);
-	//Update the lighting.
-	updateLighting(shaderProgram);
-	//Bind for rendering.
-	glBindVertexArray(this->VAO);
-	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+/* Setup default camera for the object (Assuming the object is at the center of the world). */
+void OBJObject::setupCamera() {
+	//Get 3 variables for the camera.
+	//this->camera.position = glm::vec3(0.0f, 0.0f, 20.0f);
+	this->camera.position = Window::camera_pos;
+	this->camera.lookat = glm::vec3 (0.0f, 0.0f, 0.0f);
+	this->camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
+	//Set up the rest of the camera.
+	this->camera.direction = glm::normalize(camera.position - camera.lookat);
+	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
 }
 
-/* Update Material if needed with the material struct */
+/* Update Material if needed from any changes in the material struct */
 void OBJObject::updateMaterial(GLuint shaderProgram) 
 {
 	glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), objMaterial.ambient.x, objMaterial.ambient.y, objMaterial.ambient.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), objMaterial.diffuse.x, objMaterial.diffuse.y, objMaterial.diffuse.z);
 	glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), objMaterial.specular.x, objMaterial.specular.y, objMaterial.specular.z);
 	glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), objMaterial.shininess);
-}
-
-/* Update lighting from the light structs */
-void OBJObject::updateLighting(GLuint shaderProgram) 
-{
-	updateSelectLighting();
-	/* Directional Light */
-	glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), dirLight.on);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
-	/* Point light */
-	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), pointLight.on);
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), pointLight.position.y, pointLight.position.y, pointLight.position.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.ambient"), pointLight.ambient.x, pointLight.ambient.y, pointLight.ambient.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.diffuse"), pointLight.diffuse.x, pointLight.diffuse.y, pointLight.diffuse.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.specular"), pointLight.specular.x, pointLight.specular.y, pointLight.specular.z);
-	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.quadratic"), pointLight.quadratic);
-	/* Spot light */
-	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.on"), spotLight.on);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.position"), spotLight.position.x, spotLight.position.y, spotLight.position.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.ambient"), spotLight.ambient.x, spotLight.ambient.y, spotLight.ambient.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.diffuse"), spotLight.diffuse.x, spotLight.diffuse.y, spotLight.diffuse.z);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.specular"), spotLight.specular.x, spotLight.specular.y, spotLight.specular.z);
-	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.quadratic"), spotLight.quadratic);
-	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.direction"), spotLight.direction.x, spotLight.direction.y, spotLight.direction.z);
-	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotCutoff"), spotLight.spotCutoff);
-	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotExponent"), spotLight.spotExponent);
+	//Update the reflection intensity.
+	glUniform1f(glGetUniformLocation(shaderProgram, "reflect_intensity"), objMaterial.shininess / 100.0f);
 }
 
 /* Select which light to be on when pressing 1, 2, 3. */
@@ -292,44 +261,101 @@ void OBJObject::updateSelectLighting()
 	}
 }
 
-/* Scale the object up. */
-void OBJObject::scaleUp()
+/* Update lighting if needed from any changes in the light structs */
+void OBJObject::updateLighting(GLuint shaderProgram) 
 {
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(SCALE_UP));
-	this->toWorld *= scaleMatrix;
+	updateSelectLighting();//Turns on the one light that should be on.
+	/* Directional Light */
+	glUniform1f(glGetUniformLocation(shaderProgram, "dirLight.on"), dirLight.on);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.direction"), dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.ambient"), dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.diffuse"), dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
+	/* Point light */
+	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.on"), pointLight.on);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.position"), pointLight.position.x, pointLight.position.y, pointLight.position.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.ambient"), pointLight.ambient.x, pointLight.ambient.y, pointLight.ambient.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.diffuse"), pointLight.diffuse.x, pointLight.diffuse.y, pointLight.diffuse.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "pointLight.specular"), pointLight.specular.x, pointLight.specular.y, pointLight.specular.z);
+	glUniform1f(glGetUniformLocation(shaderProgram, "pointLight.quadratic"), pointLight.quadratic);
+	/* Spot light */
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.on"), spotLight.on);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.position"), spotLight.position.x, spotLight.position.y, spotLight.position.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.ambient"), spotLight.ambient.x, spotLight.ambient.y, spotLight.ambient.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.diffuse"), spotLight.diffuse.x, spotLight.diffuse.y, spotLight.diffuse.z);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.specular"), spotLight.specular.x, spotLight.specular.y, spotLight.specular.z);
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.quadratic"), spotLight.quadratic);
+	glUniform3f(glGetUniformLocation(shaderProgram, "spotLight.direction"), spotLight.direction.x, spotLight.direction.y, spotLight.direction.z);
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotCutoff"), spotLight.spotCutoff);
+	glUniform1f(glGetUniformLocation(shaderProgram, "spotLight.spotExponent"), spotLight.spotExponent);
 }
 
-/* Scale the object down. */
-void OBJObject::scaleDown()
+/* Update the camera if passed in camera components. Get Camera coordinates and values from the Window class. */
+void OBJObject::updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
 {
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(SCALE_DOWN));
-	this->toWorld *= scaleMatrix;
+	//Get 3 variables for the camera.
+	this->camera.position = e;
+	this->camera.lookat = d;
+	this->camera.up = up;
+	//Set up the rest of the camera.
+	this->camera.direction = glm::normalize(camera.position - camera.lookat);
+	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
 }
 
-/* Fix Orientation, position in space (World). */
-void OBJObject::reset()
+/* [Window Class] Update the camera, based on the object's camera struct. */
+void OBJObject::window_updateCamera()
 {
-	toWorld = glm::mat4(1.0f);
+	Window::updateCamera(this->camera.position, this->camera.lookat, this->camera.up);
+}
+
+/* Render the object in modern openGL using a shader program. */
+void OBJObject::draw(GLuint shaderProgram)
+{
+	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
+	glm::mat4 MVP = Window::P * Window::V * toWorld;
+	glm::mat4 model = this->toWorld;
+	glm::mat4 view = Window::V;
+	glm::mat4 projection = Window::P;
+	//Set MVP(Total calculated, easier to multiply in the shader) for the shader.
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	//Set individual components for shader calculations (Model, View, Projection).
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
+	//Update the viewPosition.
+	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), this->camera.position.x, this->camera.position.y, this->camera.position.z);
+	//Update the material.
+	updateMaterial(shaderProgram);
+	//Update the lighting.
+	updateLighting(shaderProgram);
+	//Bind for rendering.
+	glBindVertexArray(this->VAO);
+	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
 /* Trackball mapping used to map coordinates in a sphere instead of window coordinates x and y. */
-glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)    // The CPoint class is a specific Windows class. Either use separate x and y values for the mouse location, or use a Vector3 in which you ignore the z coordinate.
+glm::vec3 OBJObject::trackBallMapping(glm::vec3 point)
 {
-	glm::vec3 trackball_p;    // Vector v is the synthesized 3D position of the mouse location on the trackball
-	float depth;     // this is the depth of the mouse location: the delta between the plane through the center of the trackball and the z position of the mouse
-	trackball_p.x = (float)((2.0*point.x - Window::width) / Window::width);   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1
-	trackball_p.y = (float)((Window::height - 2.0*point.y) / Window::height);   // this does the equivalent to the above for the mouse Y position
-	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below
+	glm::vec3 trackball_p;    // Vector v is the synthesized 3D position of the mouse location on the trackball.
+	float depth;     // this is the depth of the mouse location: the delta between the plane through the center of the trackball and the z position of the mouse.
+	trackball_p.x = (float)((2.0*point.x - Window::width) / Window::width);   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1.
+	trackball_p.y = (float)((Window::height - 2.0*point.y) / Window::height);   // this does the equivalent to the above for the mouse Y position.
+	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below.
 	depth = (float)glm::length(trackball_p);    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin).
-	depth = (float)((depth<1.0) ? depth : 1.0);   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line
-	trackball_p.z = (float)(sqrtf((float)1.001 - (float)(depth*depth)));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1
+	depth = (float)((depth<1.0) ? depth : 1.0);   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line.
+	trackball_p.z = (float)(sqrtf((float)1.001 - (float)(depth*depth)));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1.
 	trackball_p = glm::normalize(trackball_p); // Still need to normalize, since we only capped d, not v.
-	return trackball_p;  // return the mouse location on the surface of the trackball
+	return trackball_p;  // return the mouse location on the surface of the trackball.
 }
 
 /* Rotate around the middle of the screen based on mouse drag from v to w. */
-void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
+void OBJObject::camera_rotate(glm::vec3 v, glm::vec3 w)
 {
+	//Hold camera variables in vec4 for matrix multiplication.
+	glm::vec4 pos = glm::vec4(this->camera.position, 1.0f);
+	glm::vec4 up = glm::vec4(this->camera.up, 1.0f);
+
 	glm::vec3 direction = w - v;
 	float velocity = (float)glm::length(direction);
 	if (velocity > 0.0001) 
@@ -340,46 +366,50 @@ void OBJObject::rotate(glm::vec3 v, glm::vec3 w)
 		float rot_angle = acos(glm::dot(v, w));
 		//Calculate Rotation.
 		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
-		this->toWorld = rotate*this->toWorld;
+		//Calculate Camera.
+		pos = rotate*pos;
+		up = rotate*up;
+		//Update camera.
+		this->camera.position = glm::vec3(pos);
+		this->camera.up = glm::vec3(up);
+		//Update camera vectors.
+		updateCamera(camera.position, camera.lookat, camera.up);
 	}
 }
 
-/* Translate the object in world space (x,y). */
+/* Translate the object in camera space (x,y). */
 void OBJObject::translate(glm::vec3 v, glm::vec3 w)
 {
+	//Calculate the translation.
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
 	translate_v *= (float)(1 / (float)Window::width);//Scale the translation.
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), translate_v);
-	this->toWorld = translate*this->toWorld;
+	//Calculate Camera.
+	glm::vec3 position_x = this->camera.right*translate_v.x;//Moving left and right.
+	glm::vec3 position_y = this->camera.up*translate_v.y;//Moving left and right.
+	//Moving along the xy plane.
+	this->camera.position += position_x;
+	this->camera.position += position_y;
+	//Moving the lookat, to give it a strafing effect.
+	this->camera.lookat += position_x;
+	this->camera.lookat += position_y;
+	//Update camera vectors.
+	updateCamera(camera.position, camera.lookat, camera.up);
 }
 
-/* Translate the object in world space (z). */
+/* Translate the object in camera space (z). */
 void OBJObject::zoom(double y) 
 {
-	glm::vec3 translate_v = glm::vec3(0.0f, 0.0f, y);//Translate only in the Y coordinate.
-	translate_v *= (float)(1 / (float)2);//Scale the translation.
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), translate_v);
-	this->toWorld = translate*this->toWorld;
-}
-
-void OBJObject::light_sharpen()
-{
-	if (spotLight.spotExponent >= 1.0)
+	//Calculate the translation.
+	float z = (float)glm::clamp(y, -0.25, 0.25);//Translate only in the Z coordinate.
+	//Calculate new camera distance.
+	glm::vec3 direction = this->camera.direction;//position in relation to the origin.
+	glm::vec3 displacement = direction * z;//Multiply Z so it moves in the correct direction (towards the origin).
+	glm::vec3 zoom = this->camera.position - displacement;
+	//Zoom is limited. Calculate threshold.
+	if (glm::distance(zoom, camera.lookat) > 2)
 	{
-		spotLight.spotExponent -= 1.0;
+		this->camera.position = zoom;
 	}
-	else
-		spotLight.spotExponent = 0.5;
+	//Update camera vectors.
+	updateCamera(camera.position, camera.lookat, camera.up);
 }
-void OBJObject::light_blur()
-{
-	if (spotLight.spotExponent <= 100.0)
-	{
-		spotLight.spotExponent += 1.0;
-	}
-	else
-		spotLight.spotExponent = 100.0;
-}
-
-
-
