@@ -139,7 +139,7 @@ glm::vec4 Bezier::computeConstant(float t)
 	glm::vec4 result = glm::vec4(0.0f);
 	for (int i = 0; i < (n+1); i++)
 	{
-		float choose = (float)this->choose(i);
+		float choose = (float)this->choose((float)i);
 		float time1 = (float)pow(t, i);
 		float time2 = (float)pow(1.0f - t, n - i);
 		float constant = choose*time1*time2;

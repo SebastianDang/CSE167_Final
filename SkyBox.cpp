@@ -141,7 +141,7 @@ unsigned char* SkyBox::loadPPM(const char* filename, int& width, int& height)
 	} while (buf[0][0] == '#');
 	//Read image data:
 	rawData = new unsigned char[width * height * 3];
-	read = fread(rawData, width * height * 3, 1, fp);
+	read = (unsigned int)fread(rawData, width * height * 3, 1, fp);
 	fclose(fp);
 	if (read != 1)
 	{
