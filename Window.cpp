@@ -7,16 +7,15 @@
 
 const char* window_title = "CSE 167 Final";
 
-//Define Mouse control status for idle, left hold, right hold.
 #define IDLE 0
 #define LEFT_HOLD 1
 #define RIGHT_HOLD 2
 
-//Define mode for controlling the object, or switching between cameras. We can define any additional camera views here.
-#define CAMERA_WORLD 0
-#define CAMERA_1 1
-#define CAMERA_2 2
-#define CAMERA_3 3
+//Default Objects
+OBJObject * object;
+OBJObject * objectF1;
+OBJObject * objectF2;
+OBJObject * objectF3;
 
 //Define any objects here. We should always have the skybox!
 OBJObject * object_1;
@@ -42,34 +41,23 @@ int Window::width;
 int Window::height;
 double Window::x;
 double Window::y;
-int Window::mouse_status;
-int Window::camera_mode;
-glm::vec3 Window::camera_pos;
-unsigned int Window::selection_id;//Selected id.
-glm::vec3 Window::lastPoint;//Last point clicked.
+int Window::status;
+glm::vec3 Window::lastPoint;
 glm::mat4 Window::P;
 glm::mat4 Window::V;
 
 void Window::initialize_objects()
 {
-	Window::mouse_status = IDLE;
-	Window::camera_mode = CAMERA_WORLD;
-	Window::camera_pos = cam_pos;
-	Window::selection_id = 0;
-
-	//Initialize Track
-	track = new Track();
-
-	//Load the skybox.
-	skyBox = new SkyBox();
-
-	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
-	#ifdef _WIN32 
-
-	//Initialize pod, set it any material.
-	object_1 = new OBJObject("../obj/pod.obj", 2);
-
-	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
+	Window::status = IDLE;
+	//Initialize Bunny, set it to gold.
+	objectF1 = new OBJObject("bunny.obj", 1);
+	//Initialize Bear, set it to Obsidian.
+	objectF2 = new OBJObject("abear.obj", 2);
+	//Initialize Dragon, set it to Jade.
+	objectF3 = new OBJObject("adragon.obj", 3);
+	object = objectF1;//Default with the bunny.
+	// Load the shader program. Similar to the .obj objects, different platforms expect a different directory for files
+	#ifdef _WIN32 // Windows (both 32 and 64 bit versions)
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
 	shaderProgram_sb = LoadShaders("../skybox.vert", "../skybox.frag");
 	shaderProgram_bez = LoadShaders("../bezier.vert", "../bezier.frag");
@@ -160,18 +148,8 @@ void Window::idle_callback()
 
 void Window::display_callback(GLFWwindow* window)
 {
-	//Draw the entire scene.
-	Window::redrawScene();
-	//Gets events, including input such as keyboard and mouse or window resizing
-	glfwPollEvents();
-	//Swap buffers
-	glfwSwapBuffers(window);
-}
-
-void Window::redrawScene()
-{
-	//Clear the color and depth buffers
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	// Clear the color and depth buffers
+	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Use the shader of programID
@@ -193,7 +171,18 @@ void Window::redrawScene()
 /* Handle Key input. */
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	/* Global Keys */
+	//Define shift keys for capital letters.
+	int Lshift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
+	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
+	//Define 's' key.
+	int sKey = glfwGetKey(window, GLFW_KEY_S);
+	int eKey = glfwGetKey(window, GLFW_KEY_E);
+	//Callback for 's'/'S': scale down/up (about the model's center, not the center of the screen).
+	if (sKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->scaleUp();
+	else if (sKey == GLFW_PRESS) object->scaleDown();
+	//Callback for 'e'/'E':
+	if (eKey == GLFW_PRESS && (Lshift == GLFW_PRESS || Rshift == GLFW_PRESS)) object->light_blur();
+	else if (eKey == GLFW_PRESS) object->light_sharpen();
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
@@ -203,8 +192,45 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			//Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		if (key == GLFW_KEY_R) {
-			track->resetPod();
+		//Check for F1.
+		if (key == GLFW_KEY_F1)
+		{
+			object = objectF1;
+		}
+		//Check for F2.
+		if (key == GLFW_KEY_F2)
+		{
+			object = objectF2;
+		}
+		//Check for F3.
+		if (key == GLFW_KEY_F3)
+		{
+			object = objectF3;
+		}
+		//Check for 'r'.
+		if (key == GLFW_KEY_R)
+		{
+			object->reset();
+		}
+		//Check for '1'.
+		if (key == GLFW_KEY_1)
+		{
+			object->light_selection = 1;
+		}
+		//Check for '2'.
+		if (key == GLFW_KEY_2)
+		{
+			object->light_selection = 2;
+		}
+		//Check for '3'.
+		if (key == GLFW_KEY_3)
+		{
+			object->light_selection = 3;
+		}
+		//Check for '0'
+		if (key == GLFW_KEY_0)
+		{
+
 		}
 	}
 }
@@ -218,25 +244,15 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	Window::y = ypos;
 	//Get current mouse position.
 	glm::vec3 point = glm::vec3(Window::x, Window::y, 0.0f);
-	if (Window::camera_mode == CAMERA_WORLD)
+	//On left drag, we perform rotations.
+	if (Window::status == LEFT_HOLD) 
 	{
-		//On left drag, we perform rotations. Relative to the object.
-		if (Window::mouse_status == LEFT_HOLD)
-		{
-			object_1->camera_rotate(object_1->trackBallMapping(Window::lastPoint), object_1->trackBallMapping(point));//Use this to orbit the camera.
-			object_1->window_updateCamera();
-		}
-		//On right drag, we perform translations. Relative to the object.
-		if (Window::mouse_status == RIGHT_HOLD)
-		{
-			/*
-			object->translate(Window::lastPoint, point);//Use this to translate the Camera.
-			object->updateCamera();
-			*/
-			if (Window::selection_id != 0) {
-				track->movePoint(Window::selection_id, Window::lastPoint, point);
-			}
-		}
+		object->rotate(object->trackBallMapping(Window::lastPoint), object->trackBallMapping(point));//Set it to trackball coordinates.
+	}
+	//On right drag, we perform translations.
+	if (Window::status == RIGHT_HOLD) 
+	{
+		object->translate(Window::lastPoint, point);//Set it to window coordinates.
 	}
 }
 
@@ -273,33 +289,5 @@ void Window::cursor_button_callback(GLFWwindow* window, int button, int action, 
 /* Handle mouse scroll input. */
 void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	object_1->zoom(yoffset);
-	object_1->window_updateCamera();
-}
-
-/* Update the camera given e, d, and up vectors. We essentially rewrite the current camera. */
-void Window::updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
-{
-	cam_pos = e;
-	cam_look_at = d;
-	cam_up = up;
-	Window::V = glm::lookAt(e, d, up);
-}
-
-/* Selection buffer is used to select items that are selectable. */
-unsigned int Window::selectionBuffer()
-{
-	//Clear the color and depth buffers
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//Use the shader program for selection. Draw only what's needed for the selection buffer first, then set the selection_id.
-	glUseProgram(shaderProgram_select);
-	track->drawPoints(shaderProgram_select);
-	//Read the selected pixel's color components.
-	unsigned char pix[4];
-	glReadPixels(Window::x, Window::height - Window::y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pix);
-	//Redraw the rest of the scene. 
-	Window::redrawScene();
-	//Return the selected id. 0 = NONE/BLACK.
-	return (unsigned int)pix[2];
+	object->zoom(yoffset);
 }
