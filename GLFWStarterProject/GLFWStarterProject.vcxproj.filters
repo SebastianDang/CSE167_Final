@@ -60,6 +60,9 @@
     <ClInclude Include="..\Bear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp">
@@ -107,6 +110,9 @@
     <ClCompile Include="..\Bear.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -125,13 +131,19 @@
     <None Include="..\bezier.vert">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="..\bezier.frag">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="..\selection.frag">
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\selection.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\bezier.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\terrain.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\terrain.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

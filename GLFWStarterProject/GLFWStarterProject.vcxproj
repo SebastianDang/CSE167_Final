@@ -32,6 +32,7 @@
     <ClInclude Include="..\main.h" />
     <ClInclude Include="..\OBJObject.h" />
     <ClInclude Include="..\shader.h" />
+    <ClInclude Include="..\Terrain.h" />
     <ClInclude Include="..\Track.h" />
     <ClInclude Include="..\Window.h" />
   </ItemGroup>
@@ -49,6 +50,7 @@
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\OBJObject.cpp" />
     <ClCompile Include="..\shader.cpp" />
+    <ClCompile Include="..\Terrain.cpp" />
     <ClCompile Include="..\Track.cpp" />
     <ClCompile Include="..\Window.cpp" />
   </ItemGroup>
@@ -61,6 +63,8 @@
     <None Include="..\shader.vert" />
     <None Include="..\skybox.frag" />
     <None Include="..\skybox.vert" />
+    <None Include="..\terrain.frag" />
+    <None Include="..\terrain.vert" />
     <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

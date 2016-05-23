@@ -4,6 +4,7 @@
 #include "Pod.h"
 #include "Cake.h"
 #include "Track.h"
+#include "Terrain.h"
 
 const char* window_title = "CSE 167 Final";
 
@@ -24,6 +25,7 @@ OBJObject * object_2;
 OBJObject * object_3;
 
 SkyBox * skyBox;
+Terrain * terrain;
 Track * track;
 
 //Define any shaders here.
@@ -31,6 +33,7 @@ GLint shaderProgram;
 GLint shaderProgram_sb;
 GLint shaderProgram_bez;
 GLint shaderProgram_select;
+GLint shaderProgram_terrain;
 
 //Default camera parameters
 glm::vec3 cam_pos(0.0f, 0.0f, 20.0f);		// e  | Position of camera					0 0 20
@@ -60,6 +63,9 @@ void Window::initialize_objects()
 	//Initialize Track
 	track = new Track();
 
+	//Initialize Terrain
+	terrain = new Terrain();
+
 	//Load the skybox.
 	skyBox = new SkyBox();
 
@@ -67,13 +73,14 @@ void Window::initialize_objects()
 	#ifdef _WIN32 
 
 	//Initialize pod, set it any material.
-	object_1 = new OBJObject("../obj/pod.obj", 2);
+	object_1 = new OBJObject("../obj/pod.obj", 1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
 	shaderProgram_sb = LoadShaders("../skybox.vert", "../skybox.frag");
 	shaderProgram_bez = LoadShaders("../bezier.vert", "../bezier.frag");
 	shaderProgram_select = LoadShaders("../selection.vert", "../selection.frag");
+	shaderProgram_terrain = LoadShaders("../terrain.vert", "../terrain.frag");
 	
 	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
 	#else
@@ -87,6 +94,8 @@ void Window::initialize_objects()
 	shaderProgram_bez = LoadShaders("bezier.vert", "bezier.frag");
 	shaderProgram_point = LoadShaders("points.vert", "points.frag");
 	shaderProgram_select = LoadShaders("selection.vert", "selection.frag");
+	shaderProgram_terrain = LoadShaders("terrain.vert", "terrain.frag");
+
 	#endif
 }
 
@@ -95,11 +104,13 @@ void Window::clean_up()
 	//Delete any instantiated objects.
 	delete(object_1);
 	delete(skyBox);
+	delete(terrain);
 	delete(track);
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_sb);
 	glDeleteProgram(shaderProgram_bez);
+	glDeleteProgram(shaderProgram_terrain);
 }
 
 GLFWwindow* Window::create_window(int width, int height)
@@ -178,11 +189,17 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+	terrain->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_bez);
 	//Render the objects
 	track->draw(shaderProgram_bez);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_terrain);
+	//Render the terrain
+	//terrain->draw(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_sb);
