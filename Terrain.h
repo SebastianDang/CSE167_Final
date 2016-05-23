@@ -13,6 +13,8 @@ private:
 
 	glm::mat4 toWorld;
 
+	GLuint terrainTexture;
+
 	std::vector<Container> containers;//[v, vn, (s,t)]
 	std::vector<glm::vec3> vertices;//v
 	std::vector<glm::vec3> normals;//vn
@@ -22,8 +24,9 @@ private:
 
 	GLuint VAO, VBO, EBO;
 
-	void setupTerrain();
-	void loadTerrain(const char* filename);
+	void setupHeightMap();
+	void setupTerrain(const char* filename);
+	GLuint loadTerrain(const char* filename);
 
 	unsigned char * loadPPM(const char* filename, int& width, int& height);
 

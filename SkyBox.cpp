@@ -157,8 +157,10 @@ unsigned char* SkyBox::loadPPM(const char* filename, int& width, int& height)
 /* Load the cube map and return a texture ID. */
 GLuint SkyBox::loadCubemap(std::vector<const GLchar*> faces)
 {
-	GLuint textureID;//Hold the textureID (This will be the textureID to return).
+	//Hold the textureID (This will be the textureID to return).
+	GLuint textureID;
 
+	//Define variables to hold height map's width, height, pixel information.
 	int width, height;
 	unsigned char * image;
 
