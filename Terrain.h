@@ -25,6 +25,11 @@ private:
 	GLuint VAO, VBO, EBO;
 
 	void setupHeightMap();
+	void setupHeightMap(const char* filename);
+
+	float getHeightFromMap(int x, int y, unsigned char * image, int width, int height);
+	glm::vec3 calculateNormal(int x, int y, unsigned char * image, int width, int height);
+
 	void setupTerrain(const char* filename);
 	GLuint loadTerrain(const char* filename);
 

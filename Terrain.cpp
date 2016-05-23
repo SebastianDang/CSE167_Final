@@ -3,7 +3,9 @@
 using namespace std;
 
 #define SIZE 100//800
-#define VERTEX_COUNT 32//128
+#define VERTEX_COUNT 128//128
+#define MAX_HEIGHT 5//20
+#define MAX_PIXEL_COLOR (256*256*256)//256^3
 
 /* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
 Terrain::Terrain()
@@ -11,12 +13,13 @@ Terrain::Terrain()
 	this->x = SIZE;
 	this->z = SIZE;
 
-	//Setup toWorld
+	//Setup toWorld so that the terrain is at the center of the world.
 	this->toWorld = glm::mat4(1.0f);
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3((float)SIZE / 2.0f, 0, (float)SIZE / 2.0f));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	this->setupHeightMap();
+	//this->setupHeightMap();
+	this->setupHeightMap("../terrain/terrain.ppm");
 	//Load the texture and setup VAO, VBO.
 	this->setupTerrain("../terrain/grass.ppm");
 }
@@ -29,10 +32,10 @@ Terrain::~Terrain()
 	glDeleteBuffers(1, &EBO);
 }
 
-/* Setup the Height map based on loaded terrain. */
+/* Setup the Height map on a default flat terrain. */
 void Terrain::setupHeightMap()
 {
-	/* -------------------- TODO: WORK IN PROGRESS -------------------- */
+	srand(1);
 	//Create the height map: v, vn, texCoords
 	//Generate vertices, normals, and texCoords for a terrain map.
 	for (int i = 0; i < VERTEX_COUNT; i++)
@@ -41,7 +44,7 @@ void Terrain::setupHeightMap()
 		{
 			//Setup the vertices.
 			float vertex_x = -(float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-			float vertex_y = 0.0f;//0
+			float vertex_y = (float)(rand()%MAX_HEIGHT);//0
 			float vertex_z = -(float)i / ((float)VERTEX_COUNT - 1) * SIZE;
 			//Setup the normals.
 			float normal_x = 0;
@@ -66,7 +69,7 @@ void Terrain::setupHeightMap()
 			int topRight = topLeft + 1;//1//2
 			int bottomLeft = ((gz + 1)*VERTEX_COUNT) + gx;//128//129
 			int bottomRight = bottomLeft + 1;//129//130
-											 //Push back to indices.
+			//Push back to indices.
 			indices.push_back(topLeft);
 			indices.push_back(bottomLeft);
 			indices.push_back(topRight);
@@ -83,9 +86,95 @@ void Terrain::setupHeightMap()
 		Container container;
 		container.vertex = vertices[i];
 		container.normal = normals[i];
-		container.texCoord = glm::vec2(vertices[i].x, vertices[i].z);
+		container.texCoord = texCoords[i];
 		containers.push_back(container);
 	}
+}
+
+/* Setup the Height map based on loaded terrain. */
+void Terrain::setupHeightMap(const char * filename)
+{
+	//Define variables to hold height map's width, height, pixel information.
+	int width, height;
+	unsigned char * image;
+	//Generate the texture.
+	image = loadPPM(filename, width, height);//Load the ppm file.
+
+	//Create the height map: v, vn, texCoords
+	//Generate vertices, normals, and texCoords for a terrain map.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		for (int j = 0; j < VERTEX_COUNT; j++)
+		{
+			//Setup the vertices.
+			float vertex_x = -(float)j / ((float)VERTEX_COUNT - 1) * SIZE;
+			float vertex_y = getHeightFromMap(j,i, image, width, height);//0
+			float vertex_z = -(float)i / ((float)VERTEX_COUNT - 1) * SIZE;
+			//Setup the normals.
+			glm::vec3 normal = calculateNormal(j, i, image, width, height);
+			//Setup the texcoords.
+			float texCoord_x = (float)j / ((float)VERTEX_COUNT - 1);
+			float texCoord_y = (float)i / ((float)VERTEX_COUNT - 1);
+			//Push back to vectors.
+			vertices.push_back(glm::vec3(vertex_x, vertex_y, vertex_z));
+			normals.push_back(normal);
+			texCoords.push_back(glm::vec2(texCoord_x, texCoord_y));
+		}
+	}
+
+	//Setup the indices to draw based on indice points.
+	for (int gz = 0; gz < VERTEX_COUNT - 1; gz++)
+	{
+		for (int gx = 0; gx < VERTEX_COUNT - 1; gx++)
+		{
+			int topLeft = (gz*VERTEX_COUNT) + gx;//0//1
+			int topRight = topLeft + 1;//1//2
+			int bottomLeft = ((gz + 1)*VERTEX_COUNT) + gx;//128//129
+			int bottomRight = bottomLeft + 1;//129//130
+			//Push back to indices.
+			indices.push_back(topLeft);
+			indices.push_back(bottomLeft);
+			indices.push_back(topRight);
+			indices.push_back(topRight);
+			indices.push_back(bottomLeft);
+			indices.push_back(bottomRight);
+		}
+	}
+
+	//Add into container structs for rendering.
+	for (int i = 0; i < VERTEX_COUNT * VERTEX_COUNT; i++)
+	{
+		//Throw everything into a container to hold all values.
+		Container container;
+		container.vertex = vertices[i];
+		container.normal = normals[i];
+		container.texCoord = texCoords[i];
+		containers.push_back(container);
+	}
+}
+
+/* Returns the RGB value of the position (height). */
+float Terrain::getHeightFromMap(int x, int y, unsigned char * image, int width, int height)
+{
+	if (x < 0 || (3*x) >= (width) || y < 0 || y >= (height))
+	{
+		return 0;
+	}
+	int index = (3*x) + (width*y);
+	int value = (float)image[index]+(float)image[index + 1]+(float)image[index + 2];
+	float result = (float)(value % MAX_HEIGHT);
+	return result;
+}
+
+/* Returns the normal at the following position. */
+glm::vec3 Terrain::calculateNormal(int x, int y, unsigned char * image, int width, int height)
+{
+	float height_L = getHeightFromMap((x - 1), y, image, width, height);
+	float height_R = getHeightFromMap((x - 1), y, image, width, height);
+	float height_D = getHeightFromMap((x - 1), y, image, width, height);
+	float height_U = getHeightFromMap((x - 1), y, image, width, height);
+	glm::vec3 normal = glm::normalize(glm::vec3(height_L - height_R, 2.0f, height_D - height_U));
+	return normal;
 }
 
 /** Load a ppm file from disk.
@@ -228,6 +317,9 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
+	//Update view position.
+	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
+	glUniform1f(glGetUniformLocation(shaderProgram, "reflect_intensity"), 10.0f / 100.0f);
 	//Draw Terrain.
 	//Terrain.
 	glBindVertexArray(VAO);//Bind the vertex.

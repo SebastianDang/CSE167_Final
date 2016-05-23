@@ -1,6 +1,9 @@
 #version 330 core
 
+uniform samplerCube skybox;
 uniform sampler2D texture;
+uniform vec3 viewPos;
+uniform float reflect_intensity;
 
 //Define any in variables from the vertex shader.
 in vec3 FragPos;
@@ -13,5 +16,6 @@ out vec4 color;
 void main()
 {
 	color = texture(texture, FragTexCoords);
+
 }
 
