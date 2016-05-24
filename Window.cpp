@@ -189,7 +189,7 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
-	terrain->draw(shaderProgram);
+	//terrain->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_bez);
@@ -199,7 +199,7 @@ void Window::redrawScene()
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
-	//terrain->draw(shaderProgram_terrain);
+	terrain->draw(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_sb);

@@ -19,7 +19,7 @@ Terrain::Terrain()
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
 	//this->setupHeightMap();
-	this->setupHeightMap("../terrain/terrain.ppm");
+	this->setupHeightMap();
 	//Load the texture and setup VAO, VBO.
 	this->setupTerrain("../terrain/grass.ppm");
 }
@@ -44,7 +44,8 @@ void Terrain::setupHeightMap()
 		{
 			//Setup the vertices.
 			float vertex_x = -(float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-			float vertex_y = (float)(rand()%MAX_HEIGHT);//0
+			float vertex_y = 0.0f;//0
+			//float vertex_y = (float)(rand()%MAX_HEIGHT);//0
 			float vertex_z = -(float)i / ((float)VERTEX_COUNT - 1) * SIZE;
 			//Setup the normals.
 			float normal_x = 0;
