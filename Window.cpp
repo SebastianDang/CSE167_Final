@@ -110,7 +110,7 @@ void Window::clean_up()
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_sb);
 	glDeleteProgram(shaderProgram_bez);
-	glDeleteProgram(shaderProgram_terrain);
+	//glDeleteProgram(shaderProgram_terrain);
 }
 
 GLFWwindow* Window::create_window(int width, int height)
@@ -189,7 +189,7 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
-	//terrain->draw(shaderProgram);
+	terrain->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_bez);

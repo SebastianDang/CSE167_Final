@@ -319,10 +319,8 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
 	//Update view position.
-	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
-	glUniform1f(glGetUniformLocation(shaderProgram, "reflect_intensity"), 10.0f / 100.0f);
+	glDisable(GL_CULL_FACE);
 	//Draw Terrain.
-	//Terrain.
 	glBindVertexArray(VAO);//Bind the vertex.
 	glActiveTexture(GL_TEXTURE0);//Enable the texture.
 	glBindTexture(GL_TEXTURE_2D, this->terrainTexture);//Bind the cubemapTexture.

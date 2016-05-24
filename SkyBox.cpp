@@ -1,7 +1,7 @@
 #include "SkyBox.h"
 #include "Window.h"
 
-#define SIZE 50.0f
+#define SIZE 500.0f
 
 /* Initialize the object, load all the textures and set up buffers. */
 SkyBox::SkyBox()
