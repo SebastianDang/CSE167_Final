@@ -4,8 +4,9 @@ using namespace std;
 
 #define SIZE 100//800
 #define VERTEX_COUNT 128//128
-#define MAX_HEIGHT 5//20
+#define MAX_HEIGHT 20//20
 #define MAX_PIXEL_COLOR (256*256*256)//256^3
+#define MAX_DISPLACEMENT 5
 
 /* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
 Terrain::Terrain()
@@ -15,11 +16,12 @@ Terrain::Terrain()
 
 	//Setup toWorld so that the terrain is at the center of the world.
 	this->toWorld = glm::mat4(1.0f);
+	this->draw_mode = GL_TRIANGLES;
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3((float)SIZE / 2.0f, 0, (float)SIZE / 2.0f));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	//this->setupHeightMap();
 	this->setupHeightMap();
+	//this->setupHeightMap("../terrain/terrain.ppm");
 	//Load the texture and setup VAO, VBO.
 	this->setupTerrain("../terrain/grass.ppm");
 }
@@ -37,7 +39,7 @@ void Terrain::setupHeightMap()
 {
 	srand(1);
 	//Create the height map: v, vn, texCoords
-	//Generate vertices, normals, and texCoords for a terrain map.
+	//Generate vertices, normals, and texCoords for a terrain map. vertex = (j, i).
 	for (int i = 0; i < VERTEX_COUNT; i++)
 	{
 		for (int j = 0; j < VERTEX_COUNT; j++)
@@ -90,6 +92,8 @@ void Terrain::setupHeightMap()
 		container.texCoord = texCoords[i];
 		containers.push_back(container);
 	}
+
+	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1);
 }
 
 /* Setup the Height map based on loaded terrain. */
@@ -324,6 +328,82 @@ void Terrain::draw(GLuint shaderProgram)
 	glBindVertexArray(VAO);//Bind the vertex.
 	glActiveTexture(GL_TEXTURE0);//Enable the texture.
 	glBindTexture(GL_TEXTURE_2D, this->terrainTexture);//Bind the cubemapTexture.
-	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(this->draw_mode, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);//Unbind vertex.
+}
+
+/* Toggle the draw mode to draw the mesh as lines or as triangle faces. */
+void Terrain::toggleDrawMode()
+{
+	if (draw_mode == GL_TRIANGLES)
+	{
+		draw_mode = GL_LINE_STRIP;
+	}
+	else
+	{
+		draw_mode = GL_TRIANGLES;
+	}
+}
+
+void Terrain::diamond_square(float x1, float x2, float y1, float y2)
+{
+	//Get the halfway points between the vertices.
+	float hx = (x2 - x1) / 2.0f;
+	float hy = (y2 - y1) / 2.0f;
+	//Check base case to stop recursion.
+	if ((x1 + hx) <= MAX_DISPLACEMENT || (y1 + hy) <= MAX_DISPLACEMENT || (x1) > (VERTEX_COUNT-1) || (y1) > (VERTEX_COUNT-1))
+	{
+		//return;
+	}
+	//Start random number generation.
+	srand(10);
+	//Get the 4 main vertices.
+	glm::vec3 vec_a = this->vertices[y1*VERTEX_COUNT + x1];
+	glm::vec3 vec_b = this->vertices[y1*VERTEX_COUNT + x2];
+	glm::vec3 vec_c = this->vertices[y2*VERTEX_COUNT + x1];
+	glm::vec3 vec_d = this->vertices[y2*VERTEX_COUNT + x2];
+	//Get the middle vertex.
+	glm::vec3 vec_e = this->vertices[(y1 + hy)*VERTEX_COUNT + (x1 + hx)];
+	//Find the 4 midpoint vertices.
+	glm::vec3 vec_f = this->vertices[(y1 + hy)*VERTEX_COUNT + (x1)];
+	glm::vec3 vec_g = this->vertices[(y1)*VERTEX_COUNT + (x1 + hx)];
+	glm::vec3 vec_h = this->vertices[(y1 + hy)*VERTEX_COUNT + (x2)];
+	glm::vec3 vec_i = this->vertices[(y2)*VERTEX_COUNT + (x2 + hx)];
+	//Get the 4 heights.
+	float height_a = vec_a.y;
+	float height_b = vec_b.y;
+	float height_c = vec_c.y;
+	float height_d = vec_d.y;
+	//Calculate the average height in the middle and set it to E.
+	float height_e = (height_a + height_b + height_c + height_d) / 4;
+	height_e += (float)(rand() % MAX_DISPLACEMENT);
+	height_e = 20.0f;
+	vec_e.y = height_e;
+	this->vertices[(y1 + hy)*VERTEX_COUNT + (x1 + hx)] = vec_e;
+	//Calculate the average height on the midpoints and set it to the vector F.
+	float height_f = (height_a + height_c + height_e + height_e) / 4;
+	height_f += (float)(rand() % MAX_DISPLACEMENT);
+	vec_f.y = height_f;
+	this->vertices[(y1 + hy)*VERTEX_COUNT + (x1)] = vec_f;
+	//Calculate the average height on the midpoints and set it to the vector G.
+	float height_g = (height_a + height_b + height_e + height_e) / 4;
+	height_g += (float)(rand() % MAX_DISPLACEMENT);
+	vec_g.y = height_g;
+	this->vertices[(y1)*VERTEX_COUNT + (x1 + hx)] = vec_g;
+	//Calculate the average height on the midpoints and set it to the vector H.
+	float height_h = (height_b + height_d + height_e + height_e) / 4;
+	height_h += (float)(rand() % MAX_DISPLACEMENT);
+	vec_h.y = height_h;
+	this->vertices[(y1 + hy)*VERTEX_COUNT + (x2)] = vec_h;
+	//Calculate the average height on the midpoints and set it to the vector I.
+	float height_i = (height_c + height_d + height_e + height_e) / 4;
+	height_i += (float)(rand() % MAX_DISPLACEMENT);
+	vec_i.y = height_i;
+	this->vertices[(y2)*VERTEX_COUNT + (x2 + hx)] = vec_i;
+	//Begin Recursion.
+	printf("%f = %f\n", height_e, this->vertices[(y1 + hy)*VERTEX_COUNT + (x1 + hx)].y);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, this->containers.size() * sizeof(Container), &this->containers[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

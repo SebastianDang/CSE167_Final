@@ -223,6 +223,9 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		if (key == GLFW_KEY_R) {
 			track->resetPod();
 		}
+		if (key == GLFW_KEY_T){
+			terrain->toggleDrawMode();
+		}
 	}
 }
 

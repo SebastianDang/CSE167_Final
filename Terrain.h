@@ -11,6 +11,8 @@ private:
 	float x;
 	float z;
 
+	GLenum draw_mode;
+
 	glm::mat4 toWorld;
 
 	GLuint terrainTexture;
@@ -29,6 +31,8 @@ private:
 
 	float getHeightFromMap(int x, int y, unsigned char * image, int width, int height);
 	glm::vec3 calculateNormal(int x, int y, unsigned char * image, int width, int height);
+	void diamond_square(float x1, float x2, float y1, float y2);
+
 
 	void setupTerrain(const char* filename);
 	GLuint loadTerrain(const char* filename);
@@ -43,5 +47,6 @@ public:
 	//Draw and upate methods.
 	void draw(GLuint shaderProgram);
 	void update(glm::mat4 C);
+	void toggleDrawMode();
 };
 #endif
