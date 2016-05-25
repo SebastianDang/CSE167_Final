@@ -11,7 +11,7 @@ private:
 	float x;
 	float z;
 
-	GLenum draw_mode;
+	int draw_mode;
 
 	glm::mat4 toWorld;
 
@@ -31,7 +31,7 @@ private:
 
 	float getHeightFromMap(int x, int y, unsigned char * image, int width, int height);
 	glm::vec3 calculateNormal(int x, int y, unsigned char * image, int width, int height);
-	void diamond_square(float x1, float x2, float y1, float y2);
+	void diamond_square(int x1, int x2, int y1, int y2, int level);
 
 
 	void setupTerrain(const char* filename);
