@@ -36,7 +36,7 @@ GLint shaderProgram_select;
 GLint shaderProgram_terrain;
 
 //Default camera parameters
-glm::vec3 cam_pos(0.0f, 0.0f, 20.0f);		// e  | Position of camera					0 0 20
+glm::vec3 cam_pos(0.0f, 200.0f, 500.0f);		// e  | Position of camera					0 0 20
 glm::vec3 cam_look_at(0.0f, 0.0f, 0.0f);	// d  | This is where the camera looks at	0 0 0
 glm::vec3 cam_up(0.0f, 1.0f, 0.0f);			// up | What orientation "up" is			0 1 0
 
@@ -73,7 +73,7 @@ void Window::initialize_objects()
 	#ifdef _WIN32 
 
 	//Initialize pod, set it any material.
-	object_1 = new OBJObject("../obj/pod.obj", 1);
+	object_1 = new OBJObject("../obj/pod.obj", 3);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
@@ -194,12 +194,12 @@ void Window::redrawScene()
 	//Use the shader of programID
 	glUseProgram(shaderProgram_bez);
 	//Render the objects
-	track->draw(shaderProgram_bez);
+	//track->draw(shaderProgram_bez);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
-	terrain->draw(shaderProgram_terrain);
+	//terrain->draw(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_sb);

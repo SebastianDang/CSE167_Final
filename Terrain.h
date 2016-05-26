@@ -8,9 +8,6 @@
 class Terrain
 {
 private:
-	float x;
-	float z;
-
 	int draw_mode;
 
 	glm::mat4 toWorld;
@@ -27,17 +24,15 @@ private:
 	GLuint VAO, VBO, EBO;
 
 	void setupHeightMap();
-	void setupHeightMap(const char* filename);
+	void setupHeightMap(const char* filename, float n_smooth, float n_range);
 
 	float getHeightFromMap(int x, int y, unsigned char * image, int width, int height);
-	glm::vec3 calculateNormal(int x, int y, unsigned char * image, int width, int height);
-	void diamond_square(int x1, int x2, int y1, int y2, int level);
-
-
-	void setupTerrain(const char* filename);
-	GLuint loadTerrain(const char* filename);
+	void diamond_square(int x1, int x2, int y1, int y2, int level, float range);
+	void updateNormals();
 
 	unsigned char * loadPPM(const char* filename, int& width, int& height);
+	GLuint loadTerrain(const char* filename);
+	void setupTerrain(const char* filename);
 
 public:
 	//Constructor methods.
@@ -45,8 +40,7 @@ public:
 	~Terrain();
 
 	//Draw and upate methods.
-	void draw(GLuint shaderProgram);
-	void update(glm::mat4 C);
 	void toggleDrawMode();
+	void draw(GLuint shaderProgram);
 };
 #endif

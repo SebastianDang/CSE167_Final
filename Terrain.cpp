@@ -4,28 +4,22 @@
 using namespace std;
 
 #define SIZE 800//800
-#define VERTEX_COUNT 127//128
-#define MAX_HEIGHT 20//20
-#define MAX_PIXEL_COLOR (256*256*256)//256^3
-#define MAX_DISPLACEMENT 0.05f
-#define MAX_DIAMOND_SQUARE_LEVELS 4
+#define VERTEX_COUNT 128//128
+#define MAX_HEIGHT 50//20
+#define MAX_DISPLACEMENT 0.5f
 #define DRAW_SHADED 0
 #define DRAW_WIREFRAME 1
 
 /* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
 Terrain::Terrain()
 {
-	this->x = SIZE;
-	this->z = SIZE;
-
+	this->draw_mode = DRAW_SHADED;
 	//Setup toWorld so that the terrain is at the center of the world.
 	this->toWorld = glm::mat4(1.0f);
-	this->draw_mode = 0;
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3((float)-SIZE / 2.0f, 0, (float)-SIZE / 2.0f));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	//this->setupHeightMap();
-	this->setupHeightMap("../terrain/terrain.ppm");
+	this->setupHeightMap("../terrain/terrain.ppm", 4.0f, 4.0f);
 	//Load the texture and setup VAO, VBO.
 	this->setupTerrain("../terrain/grass.ppm");
 }
@@ -41,7 +35,6 @@ Terrain::~Terrain()
 /* Setup the Height map on a default flat terrain. */
 void Terrain::setupHeightMap()
 {
-	srand(time(NULL));
 	//Create the height map: v, vn, texCoords
 	//Generate vertices, normals, and texCoords for a terrain map. vertex = (j, i).
 	for (int i = 0; i < VERTEX_COUNT; i++)
@@ -50,7 +43,7 @@ void Terrain::setupHeightMap()
 		{
 			//Setup the vertices.
 			float vertex_x = (float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-			float vertex_y = rand()%2;
+			float vertex_y = 0.0f;
 			float vertex_z = (float)i / ((float)VERTEX_COUNT - 1) * SIZE;
 			//Setup the normals.
 			float normal_x = 0;
@@ -83,7 +76,6 @@ void Terrain::setupHeightMap()
 			indices.push_back(bottomRight);
 		}
 	}
-
 	//Add into container structs for rendering.
 	for (int i = 0; i < VERTEX_COUNT * VERTEX_COUNT; i++)
 	{
@@ -94,19 +86,16 @@ void Terrain::setupHeightMap()
 		container.texCoord = texCoords[i];
 		containers.push_back(container);
 	}
-
-	diamond_square(0, VERTEX_COUNT-1, 0, VERTEX_COUNT-1, 9);
 }
 
 /* Setup the Height map based on loaded terrain. */
-void Terrain::setupHeightMap(const char * filename)
+void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range)
 {
 	//Define variables to hold height map's width, height, pixel information.
 	int width, height;
 	unsigned char * image;
 	//Generate the texture.
 	image = loadPPM(filename, width, height);//Load the ppm file.
-
 	//Create the height map: v, vn, texCoords
 	//Generate vertices, normals, and texCoords for a terrain map.
 	for (int i = 0; i < VERTEX_COUNT; i++)
@@ -115,20 +104,21 @@ void Terrain::setupHeightMap(const char * filename)
 		{
 			//Setup the vertices.
 			float vertex_x = (float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-			float vertex_y = getHeightFromMap(j,i, image, width, height);//0
+			float vertex_y = getHeightFromMap(j, i, image, width, height);
 			float vertex_z = (float)i / ((float)VERTEX_COUNT - 1) * SIZE;
 			//Setup the normals.
-			glm::vec3 normal = calculateNormal(j, i, image, width, height);
+			float normal_x = 0;
+			float normal_y = 1.0f;
+			float normal_z = 0;
 			//Setup the texcoords.
 			float texCoord_x = (float)j / ((float)VERTEX_COUNT - 1);
 			float texCoord_y = (float)i / ((float)VERTEX_COUNT - 1);
 			//Push back to vectors.
 			vertices.push_back(glm::vec3(vertex_x, vertex_y, vertex_z));
-			normals.push_back(normal);
+			normals.push_back(glm::vec3(normal_x, normal_y, normal_z));
 			texCoords.push_back(glm::vec2(texCoord_x, texCoord_y));
 		}
 	}
-
 	//Setup the indices to draw based on indice points.
 	for (int gz = 0; gz < VERTEX_COUNT - 1; gz++)
 	{
@@ -157,7 +147,8 @@ void Terrain::setupHeightMap(const char * filename)
 		container.texCoord = texCoords[i];
 		containers.push_back(container);
 	}
-	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, 6);
+	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, glm::pow(2, n_smooth), n_range);
+	updateNormals();
 }
 
 /* Returns the RGB value of the position (height). */
@@ -173,15 +164,103 @@ float Terrain::getHeightFromMap(int x, int y, unsigned char * image, int width, 
 	return result;
 }
 
-/* Returns the normal at the following position. */
-glm::vec3 Terrain::calculateNormal(int x, int y, unsigned char * image, int width, int height)
+/* Perform the diamond square algorithm at most 2^n steps. Pass in input level: 2^n, and small number for the range. */
+void Terrain::diamond_square(int x1, int x2, int y1, int y2, int level, float range)
 {
-	float height_L = getHeightFromMap((x - 1), y, image, width, height);
-	float height_R = getHeightFromMap((x + 1), y, image, width, height);
-	float height_D = getHeightFromMap(x, (y - 1), image, width, height);
-	float height_U = getHeightFromMap(x, (y + 1), image, width, height);
-	glm::vec3 normal = glm::normalize(glm::vec3(height_L - height_R, 2.0f, height_D - height_U));
-	return normal;
+	//Check base case to stop recursion.
+	if (level < 1)
+		return;
+	//Start random number generation.
+	srand(time(NULL));
+	//Diamond Algorithm
+	for (int i = x1 + level; i < x2; i += level)
+	{
+		for (int j = y1 + level; j < y2; j += level)
+		{
+			//Get the 4 main vertices.
+			glm::vec3 vec_a = this->vertices[(j - level)*VERTEX_COUNT + (i - level)];
+			glm::vec3 vec_b = this->vertices[(j - level)*VERTEX_COUNT + i];
+			glm::vec3 vec_c = this->vertices[(j)*VERTEX_COUNT + (i - level)];
+			glm::vec3 vec_d = this->vertices[(j)*VERTEX_COUNT + i];
+			//Get the middle vertex.
+			glm::vec3 vec_e = this->vertices[(j - level / 2)*VERTEX_COUNT + (i - level / 2)];
+			//Get the 4 heights.
+			float height_a = vec_a.y;
+			float height_b = vec_b.y;
+			float height_c = vec_c.y;
+			float height_d = vec_d.y;
+			//Calculate the average height in the middle and set it to E.
+			float height_e = (float)(height_a + height_b + height_c + height_d) / 4;
+			height_e += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT)*range;
+			vec_e.y = height_e;
+			this->vertices[(j - level / 2)*VERTEX_COUNT + (i - level / 2)] = vec_e;
+			this->containers[(j - level / 2)*VERTEX_COUNT + (i - level / 2)].vertex = vec_e;
+		}
+	}
+	//Square algorithm
+	for (int i = x1 + 2 * level; i < x2; i += level)
+	{
+		for (int j = y1 + 2 * level; j < y2; j += level)
+		{
+			//Get the 4 main vertices.
+			glm::vec3 vec_a = this->vertices[(j - level)*VERTEX_COUNT + (i - level)];
+			glm::vec3 vec_b = this->vertices[(j - level)*VERTEX_COUNT + i];
+			glm::vec3 vec_c = this->vertices[(j)*VERTEX_COUNT + (i - level)];
+			glm::vec3 vec_d = this->vertices[(j)*VERTEX_COUNT + i];
+			//Get the middle vertex.
+			glm::vec3 vec_e = this->vertices[(j - level / 2)*VERTEX_COUNT + (i - level / 2)];
+			//Get the 5 heights.
+			float height_a = vec_a.y;
+			float height_b = vec_b.y;
+			float height_c = vec_c.y;
+			float height_d = vec_d.y;
+			float height_e = vec_e.y;
+			//Calculate the average height and set it to F.
+			glm::vec3 vec_f = this->vertices[(j - level / 2)*VERTEX_COUNT + (i - level)];//
+			float height_f = (float)(height_a + height_c + height_e + this->vertices[(j - level / 2)*VERTEX_COUNT + (i - 3 * level / 2)].y) / 3;
+			height_f += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT)*range;
+			vec_f.y = height_f;
+			this->vertices[(j - level / 2)*VERTEX_COUNT + (i - level)] = vec_f;
+			this->containers[(j - level / 2)*VERTEX_COUNT + (i - level)].vertex = vec_f;
+			//Calculate the average height and set it to G.
+			glm::vec3 vec_g = this->vertices[(j - level)*VERTEX_COUNT + (i - level / 2)];
+			float height_g = (float)(height_a + height_b + height_e + this->vertices[(j - 3 * level / 2)*VERTEX_COUNT + (i - level / 2)].y) / 3;
+			height_g += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT)*range;
+			vec_g.y = height_g;
+			this->vertices[(j - level)*VERTEX_COUNT + (i - level / 2)] = vec_g;
+			this->containers[(j - level)*VERTEX_COUNT + (i - level / 2)].vertex = vec_g;
+		}
+	}
+	//Begin Recursion.
+	diamond_square(x1, x2, y1, y2, level / 2, range / 2);
+}
+
+/* Updates the normals for the entire terrain. */
+void Terrain::updateNormals()
+{
+	for (int gz = 0; gz < VERTEX_COUNT - 1; gz++)
+	{
+		for (int gx = 0; gx < VERTEX_COUNT - 1; gx++)
+		{
+			int topLeft = (gz*VERTEX_COUNT) + gx;
+			int topRight = topLeft + 1;
+			int bottomLeft = ((gz + 1)*VERTEX_COUNT) + gx;
+			int bottomRight = bottomLeft + 1;
+			//Set the new normal values.
+			glm::vec3 normal_TL = glm::cross(this->vertices[topLeft], this->vertices[bottomLeft]);
+			this->normals[topLeft] = normal_TL;
+			this->containers[topLeft].normal = normal_TL;
+			glm::vec3 normal_BL = glm::cross(this->vertices[bottomLeft], this->vertices[topRight]);
+			this->normals[bottomLeft] = normal_BL;
+			this->containers[bottomLeft].normal = normal_BL;
+			glm::vec3 normal_TR = glm::cross(this->vertices[topRight], this->vertices[bottomLeft]);
+			this->normals[topRight] = normal_TR;
+			this->containers[topRight].normal = normal_TR;
+			glm::vec3 normal_BR = glm::cross(this->vertices[bottomLeft], this->vertices[bottomRight]);
+			this->normals[bottomRight] = normal_BR;
+			this->containers[bottomRight].normal = normal_BR;
+		}
+	}
 }
 
 /** Load a ppm file from disk.
@@ -310,7 +389,20 @@ void Terrain::setupTerrain(const char* filename)
 	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
 }
 
-/* Draw function. */
+/* Toggle the draw mode to draw the mesh as lines (wireframe) or as triangle faces. */
+void Terrain::toggleDrawMode()
+{
+	if (draw_mode == 0)
+	{
+		draw_mode = DRAW_WIREFRAME;
+	}
+	else
+	{
+		draw_mode = DRAW_SHADED;
+	}
+}
+
+/* Draw the terrain. */
 void Terrain::draw(GLuint shaderProgram)
 {
 	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
@@ -343,82 +435,4 @@ void Terrain::draw(GLuint shaderProgram)
 	glBindVertexArray(0);//Unbind vertex.
 	//Set it back to fill.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
-
-/* Toggle the draw mode to draw the mesh as lines (wireframe) or as triangle faces. */
-void Terrain::toggleDrawMode()
-{
-	if (draw_mode == 0)
-	{
-		draw_mode = DRAW_WIREFRAME;
-	}
-	else
-	{
-		draw_mode = DRAW_SHADED;
-	}
-}
-
-/* Perform the diamond square algorithm at most MAX_DIAMOND_SQUARE_LEVELS steps. */
-void Terrain::diamond_square(int x1, int x2, int y1, int y2, int level)
-{
-	//Check base case to stop recursion.
-	if (level <= 0)
-		return;
-	//Start random number generation.
-	srand(time(NULL));
-	//Get the halfway points between the vertices.
-	int hx = (x2 - x1) / 2.0f;
-	int hy = (y2 - y1) / 2.0f;
-	//Get the 4 main vertices.
-	glm::vec3 vec_a = this->vertices[y1*VERTEX_COUNT + x1];
-	glm::vec3 vec_b = this->vertices[y1*VERTEX_COUNT + x2];
-	glm::vec3 vec_c = this->vertices[y2*VERTEX_COUNT + x1];
-	glm::vec3 vec_d = this->vertices[y2*VERTEX_COUNT + x2];
-	//Get the middle vertex.
-	glm::vec3 vec_e = this->vertices[(y1 + hy)*VERTEX_COUNT + (x1 + hx)];
-	//Find the 4 midpoint vertices.
-	glm::vec3 vec_f = this->vertices[(y1 + hy)*VERTEX_COUNT + (x1)];//
-	glm::vec3 vec_g = this->vertices[(y1)*VERTEX_COUNT + (x1 + hx)];
-	glm::vec3 vec_h = this->vertices[(y1 + hy)*VERTEX_COUNT + (x2)];//
-	glm::vec3 vec_i = this->vertices[(y2)*VERTEX_COUNT + (x1 + hx)];
-	//Get the 4 heights.
-	float height_a = vec_a.y;
-	float height_b = vec_b.y;
-	float height_c = vec_c.y;
-	float height_d = vec_d.y;
-	//Calculate the average height in the middle and set it to E.
-	float height_e = (float)(height_a + height_b + height_c + height_d) / 4;
-	height_e += fmod(((float)(rand())/1000), MAX_DISPLACEMENT);
-	vec_e.y = height_e;
-	this->vertices[(y1 + hy)*VERTEX_COUNT + (x1 + hx)] = vec_e;
-	this->containers[(y1 + hy)*VERTEX_COUNT + (x1 + hx)].vertex = vec_e;
-	//Calculate the average height on the midpoints and set it to the vector F.
-	float height_f = (float)(height_a + height_c + height_e) / 3;
-	height_f += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT);
-	vec_f.y = height_f;
-	this->vertices[(y1 + hy)*VERTEX_COUNT + (x1)] = vec_f;
-	this->containers[(y1 + hy)*VERTEX_COUNT + (x1)].vertex = vec_f;
-	//Calculate the average height on the midpoints and set it to the vector G.
-	float height_g = (float)(height_a + height_b + height_e) / 3;
-	height_g += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT);
-	vec_g.y = height_g;
-	this->vertices[(y1)*VERTEX_COUNT + (x1 + hx)] = vec_g;
-	this->containers[(y1)*VERTEX_COUNT + (x1 + hx)].vertex = vec_g;
-	//Calculate the average height on the midpoints and set it to the vector H.
-	float height_h = (float)(height_b + height_d + height_e) / 3;
-	height_h += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT);
-	vec_h.y = height_h;
-	this->vertices[(y1 + hy)*VERTEX_COUNT + (x2)] = vec_h;
-	this->containers[(y1 + hy)*VERTEX_COUNT + (x2)].vertex = vec_h;
-	//Calculate the average height on the midpoints and set it to the vector I.
-	float height_i = (float)(height_c + height_d + height_e) / 3;
-	height_i += fmod(((float)(rand()) / 1000), MAX_DISPLACEMENT);
-	vec_i.y = height_i;
-	this->vertices[(y2)*VERTEX_COUNT + (x1 + hx)] = vec_i;
-	this->containers[(y2)*VERTEX_COUNT + (x1 + hx)].vertex = vec_i;
-	//Begin Recursion.
-	diamond_square(x1, x1 + hx, y1, y1 + hy, level - 1);//Top Left
-	diamond_square(x1 + hx, x2, y1, y1 + hy, level - 1);//Top Right
-	diamond_square(x1, x1 + hx, y1+hy, y2, level - 1);//Bottom Left
-	diamond_square(x1 + hx, x2, y1 + hy, y2, level - 1);//Bottom Right
 }

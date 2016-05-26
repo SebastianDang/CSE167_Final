@@ -400,7 +400,8 @@ void OBJObject::translate(glm::vec3 v, glm::vec3 w)
 void OBJObject::zoom(double y) 
 {
 	//Calculate the translation.
-	float z = (float)glm::clamp(y, -0.25, 0.25);//Translate only in the Z coordinate.
+	//float z = (float)glm::clamp(y, -0.25, 0.25);//Translate only in the Z coordinate.
+	float z = y;
 	//Calculate new camera distance.
 	glm::vec3 direction = this->camera.direction;//position in relation to the origin.
 	glm::vec3 displacement = direction * z;//Multiply Z so it moves in the correct direction (towards the origin).
