@@ -36,7 +36,7 @@ GLint shaderProgram_select;
 GLint shaderProgram_terrain;
 
 //Default camera parameters
-glm::vec3 cam_pos(0.0f, 200.0f, 500.0f);		// e  | Position of camera					0 0 20
+glm::vec3 cam_pos(0.0f, 300.0f, 300.0f);		// e  | Position of camera					0 0 20
 glm::vec3 cam_look_at(0.0f, 0.0f, 0.0f);	// d  | This is where the camera looks at	0 0 0
 glm::vec3 cam_up(0.0f, 1.0f, 0.0f);			// up | What orientation "up" is			0 1 0
 
@@ -166,7 +166,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 
 void Window::idle_callback()
 {
-	object_1->toWorld = track->updatePod();//Get the updated pod's position.
+	//object_1->toWorld = track->updatePod();//Get the updated pod's position.
 }
 
 void Window::display_callback(GLFWwindow* window)
@@ -189,7 +189,7 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
-	terrain->draw(shaderProgram);
+	//terrain->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_bez);
@@ -199,7 +199,7 @@ void Window::redrawScene()
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
-	//terrain->draw(shaderProgram_terrain);
+	terrain->draw(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_sb);

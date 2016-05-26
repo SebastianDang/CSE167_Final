@@ -20,8 +20,9 @@ Terrain::Terrain()
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
 	this->setupHeightMap("../terrain/terrain.ppm", 4.0f, 4.0f);
+	//this->setupHeightMap();
 	//Load the texture and setup VAO, VBO.
-	this->setupTerrain("../terrain/grass.ppm");
+	this->setupTerrain();
 }
 
 /* Deconstructor to safely delete when finished. */
@@ -149,6 +150,7 @@ void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range
 	}
 	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, glm::pow(2, n_smooth), n_range);
 	updateNormals();
+	updateMaxMinHeight();
 }
 
 /* Returns the RGB value of the position (height). */
@@ -263,6 +265,27 @@ void Terrain::updateNormals()
 	}
 }
 
+/* Updates and finds the max and min height of the terrain. */
+void Terrain::updateMaxMinHeight()
+{
+	float max = -INFINITY, min = INFINITY;
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		float cur_height = vertices[i].y;
+		if (cur_height > max)
+		{
+			max = cur_height;
+		}
+		if (cur_height < min)
+		{
+			min = cur_height;
+		}
+	}
+	//Set the max and min heights found.
+	this->max_height = max;
+	this->min_height = min;
+}
+
 /** Load a ppm file from disk.
 @input filename The location of the PPM file.  If the file is not found, an error message
 will be printed and this function will return 0
@@ -318,7 +341,7 @@ unsigned char * Terrain::loadPPM(const char* filename, int& width, int& height)
 }
 
 /* Load the Terrain through the read height map. */
-GLuint Terrain::loadTerrain(const char* filename)
+GLuint Terrain::loadTerrain(const char* filename, int index)
 {
 	//Hold the textureID (This will be the textureID to return).
 	GLuint textureID;
@@ -327,7 +350,8 @@ GLuint Terrain::loadTerrain(const char* filename)
 	unsigned char * image;
 	//Create ID for texture.
 	glGenTextures(1, &textureID);
-	glActiveTexture(GL_TEXTURE1);//Set this texture to be the active texture (1).
+	//Set the active texture ID.
+	glActiveTexture(GL_TEXTURE0);
 	//Set this texture to be the one we are working with.
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	//Generate the texture.
@@ -338,7 +362,7 @@ GLuint Terrain::loadTerrain(const char* filename)
 	//Use bilinear interpolation:
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//Use clamp to edge to hide skybox edges:
+	//Use clamp to edge:
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);//X
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);//Y
 	//Unbind the texture cube map.
@@ -348,7 +372,7 @@ GLuint Terrain::loadTerrain(const char* filename)
 }
 
 /* Initialize a terrain based on height maps. We can choose to generate a default height map or read in from an image ".ppm" file. */
-void Terrain::setupTerrain(const char* filename)
+void Terrain::setupTerrain()
 {
 	//Create buffers/arrays.
 	glGenVertexArrays(1, &this->VAO);
@@ -381,8 +405,11 @@ void Terrain::setupTerrain(const char* filename)
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, texCoord));
 
-	//Set up Terrain texture.
-	this->terrainTexture = loadTerrain(filename);
+	//Set up Terrain textures.
+	this->terrainTexture_0 = loadTerrain("../terrain/texture_0.ppm", 0);
+	this->terrainTexture_1 = loadTerrain("../terrain/texture_1.ppm", 1);
+	this->terrainTexture_2 = loadTerrain("../terrain/texture_2.ppm", 2);
+	this->terrainTexture_3 = loadTerrain("../terrain/texture_3.ppm", 3);
 
 	//Unbind.
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind.
@@ -417,6 +444,9 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
 	//Update view position.
+	glUniform1f(glGetUniformLocation(shaderProgram, "max_height"), this->max_height);
+	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
+
 	glDisable(GL_CULL_FACE);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
@@ -429,10 +459,26 @@ void Terrain::draw(GLuint shaderProgram)
 	}
 	//Draw the terrain.
 	glBindVertexArray(VAO);//Bind the vertex.
+	
 	glActiveTexture(GL_TEXTURE0);//Enable the texture.
-	glBindTexture(GL_TEXTURE_2D, this->terrainTexture);//Bind the cubemapTexture.
+	glBindTexture(GL_TEXTURE_2D, this->terrainTexture_0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "TerrainTexture_0"), 0);
+
+	glActiveTexture(GL_TEXTURE1);//Enable the texture.
+	glBindTexture(GL_TEXTURE_2D, this->terrainTexture_1);
+	glUniform1i(glGetUniformLocation(shaderProgram, "TerrainTexture_1"), 1);
+
+	glActiveTexture(GL_TEXTURE2);//Enable the texture.
+	glBindTexture(GL_TEXTURE_2D, this->terrainTexture_2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "TerrainTexture_2"), 2);
+
+	glActiveTexture(GL_TEXTURE3);//Enable the texture.
+	glBindTexture(GL_TEXTURE_2D, this->terrainTexture_3);
+	glUniform1i(glGetUniformLocation(shaderProgram, "TerrainTexture_3"), 3);
+
 	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);//Unbind vertex.
+
 	//Set it back to fill.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
