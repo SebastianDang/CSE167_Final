@@ -3,7 +3,7 @@
 #define TERRAIN_H
 
 #include "Window.h"
-#include "OBJObject.h"
+#include "Definitions.h"
 
 class Terrain
 {

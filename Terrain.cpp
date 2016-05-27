@@ -168,7 +168,7 @@ void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range
 		containers.push_back(container);
 	}
 	//Perform smoothing.
-	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, glm::pow(2, n_smooth), n_range);
+	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, (int)glm::pow(2, n_smooth), (float)n_range);
 	updateNormals();
 	updateMaxMinHeight();
 }
@@ -181,8 +181,8 @@ float Terrain::getHeightFromMap(int x, int y, unsigned char * image, int width, 
 		return 0;
 	}
 	int index = (3*x) + (width*y);
-	int value = (float)image[index]+(float)image[index + 1]+(float)image[index + 2];
-	float result = (float)(value % MAX_HEIGHT);
+	float value = (float)image[index]+(float)image[index + 1]+(float)image[index + 2];
+	float result = (float)fmod(value, (float)MAX_HEIGHT);
 	return result;
 }
 
@@ -193,7 +193,7 @@ void Terrain::diamond_square(int x1, int x2, int y1, int y2, int level, float ra
 	if (level < 1)
 		return;
 	//Start random number generation.
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	//Diamond Algorithm
 	for (int i = x1 + level; i < x2; i += level)
 	{
@@ -464,7 +464,7 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
-	//Update view position.
+	//Update heights.
 	glUniform1f(glGetUniformLocation(shaderProgram, "max_height"), this->max_height);
 	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
 

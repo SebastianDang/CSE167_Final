@@ -22,7 +22,9 @@
     <ClInclude Include="..\Bezier.h" />
     <ClInclude Include="..\Cake.h" />
     <ClInclude Include="..\Bear.h" />
+    <ClInclude Include="..\Camera.h" />
     <ClInclude Include="..\Cylinder.h" />
+    <ClInclude Include="..\Definitions.h" />
     <ClInclude Include="..\Geode.h" />
     <ClInclude Include="..\Group.h" />
     <ClInclude Include="..\MatrixTransform.h" />
@@ -40,6 +42,7 @@
     <ClCompile Include="..\Bezier.cpp" />
     <ClCompile Include="..\Cake.cpp" />
     <ClCompile Include="..\Bear.cpp" />
+    <ClCompile Include="..\Camera.cpp" />
     <ClCompile Include="..\Cylinder.cpp" />
     <ClCompile Include="..\Geode.cpp" />
     <ClCompile Include="..\Group.cpp" />

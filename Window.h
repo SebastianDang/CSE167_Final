@@ -1,5 +1,5 @@
-#ifndef _WINDOW_H_
-#define _WINDOW_H_
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -16,9 +16,9 @@
 #include "OBJObject.h"
 #include "SkyBox.h"
 
-
 class Window
 {
+private:
 public:
 
 	static double x;
@@ -43,8 +43,6 @@ public:
 	static void cursor_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 	static void updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up);
 	static void redrawScene();
-	static unsigned int selectionBuffer();
-	static unsigned int selection_id;
 };
 
 #endif
