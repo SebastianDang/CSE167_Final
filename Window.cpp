@@ -26,7 +26,6 @@ OBJObject * object_3;
 
 SkyBox * skyBox;
 Terrain * terrain;
-Track * track;
 
 //Define any shaders here.
 GLint shaderProgram;
@@ -60,11 +59,8 @@ void Window::initialize_objects()
 	Window::camera_pos = cam_pos;
 	Window::selection_id = 0;
 
-	//Initialize Track
-	track = new Track();
-
 	//Initialize Terrain
-	terrain = new Terrain();
+	terrain = new Terrain(0, 0, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", "../terrain/blend_map.ppm");
 
 	//Load the skybox.
 	skyBox = new SkyBox();
@@ -105,7 +101,6 @@ void Window::clean_up()
 	delete(object_1);
 	delete(skyBox);
 	delete(terrain);
-	delete(track);
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_sb);
@@ -191,10 +186,6 @@ void Window::redrawScene()
 	object_1->draw(shaderProgram);
 	//terrain->draw(shaderProgram);
 
-	//Use the shader of programID
-	glUseProgram(shaderProgram_bez);
-	//Render the objects
-	//track->draw(shaderProgram_bez);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
@@ -219,9 +210,6 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		{
 			//Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
-		}
-		if (key == GLFW_KEY_R) {
-			track->resetPod();
 		}
 		if (key == GLFW_KEY_T){
 			terrain->toggleDrawMode();
@@ -254,7 +242,7 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 			object->updateCamera();
 			*/
 			if (Window::selection_id != 0) {
-				track->movePoint(Window::selection_id, Window::lastPoint, point);
+
 			}
 		}
 	}
@@ -314,7 +302,7 @@ unsigned int Window::selectionBuffer()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//Use the shader program for selection. Draw only what's needed for the selection buffer first, then set the selection_id.
 	glUseProgram(shaderProgram_select);
-	track->drawPoints(shaderProgram_select);
+
 	//Read the selected pixel's color components.
 	unsigned char pix[4];
 	glReadPixels(Window::x, Window::height - Window::y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pix);

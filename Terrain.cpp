@@ -3,26 +3,45 @@
 
 using namespace std;
 
-#define SIZE 800//800
-#define VERTEX_COUNT 128//128
-#define MAX_HEIGHT 50//20
+#define SIZE 50
+#define VERTEX_COUNT 128
+#define MAX_HEIGHT 50
 #define MAX_DISPLACEMENT 0.5f
 #define DRAW_SHADED 0
 #define DRAW_WIREFRAME 1
 
-/* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
-Terrain::Terrain()
+/* Flat Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map)
 {
+	//Setup the terrain.
+	this->x = x_d * SIZE;
+	this->z = z_d * SIZE;
 	this->draw_mode = DRAW_SHADED;
 	//Setup toWorld so that the terrain is at the center of the world.
 	this->toWorld = glm::mat4(1.0f);
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3((float)-SIZE / 2.0f, 0, (float)-SIZE / 2.0f));
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	this->setupHeightMap("../terrain/terrain.ppm", 4.0f, 4.0f);
-	//this->setupHeightMap();
-	//Load the texture and setup VAO, VBO.
-	this->setupTerrain();
+	this->setupHeightMap();
+	//Load the texture and setup VAO, VBO for the terrains.
+	this->setupTerrain(terrain_0, terrain_1, terrain_2, terrain_3, blend_map);
+}
+
+/* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map)
+{
+	//Setup the terrain.
+	this->x = x_d * SIZE;
+	this->z = z_d * SIZE;
+	this->draw_mode = DRAW_SHADED;
+	//Setup toWorld so that the terrain is at the center of the world.
+	this->toWorld = glm::mat4(1.0f);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
+	this->toWorld = translate*this->toWorld;
+	//Setup HeightMap
+	this->setupHeightMap(height_map, 128.0f, 4.0f);
+	//Load the texture and setup VAO, VBO for the terrains.
+	this->setupTerrain(terrain_0, terrain_1, terrain_2, terrain_3, blend_map);
 }
 
 /* Deconstructor to safely delete when finished. */
@@ -33,7 +52,7 @@ Terrain::~Terrain()
 	glDeleteBuffers(1, &EBO);
 }
 
-/* Setup the Height map on a default flat terrain. */
+/* Setup a default flat terrain. */
 void Terrain::setupHeightMap()
 {
 	//Create the height map: v, vn, texCoords
@@ -89,7 +108,7 @@ void Terrain::setupHeightMap()
 	}
 }
 
-/* Setup the Height map based on loaded terrain. */
+/* Setup the terrain based on loaded height map. */
 void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range)
 {
 	//Define variables to hold height map's width, height, pixel information.
@@ -148,6 +167,7 @@ void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range
 		container.texCoord = texCoords[i];
 		containers.push_back(container);
 	}
+	//Perform smoothing.
 	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, glm::pow(2, n_smooth), n_range);
 	updateNormals();
 	updateMaxMinHeight();
@@ -372,7 +392,7 @@ GLuint Terrain::loadTerrain(const char* filename, int index)
 }
 
 /* Initialize a terrain based on height maps. We can choose to generate a default height map or read in from an image ".ppm" file. */
-void Terrain::setupTerrain()
+void Terrain::setupTerrain(const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map)
 {
 	//Create buffers/arrays.
 	glGenVertexArrays(1, &this->VAO);
@@ -406,10 +426,11 @@ void Terrain::setupTerrain()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Container), (GLvoid*)offsetof(Container, texCoord));
 
 	//Set up Terrain textures.
-	this->terrainTexture_0 = loadTerrain("../terrain/texture_0.ppm", 0);
-	this->terrainTexture_1 = loadTerrain("../terrain/texture_1.ppm", 1);
-	this->terrainTexture_2 = loadTerrain("../terrain/texture_2.ppm", 2);
-	this->terrainTexture_3 = loadTerrain("../terrain/texture_3.ppm", 3);
+	this->terrainTexture_0 = loadTerrain(terrain_0, 0);
+	this->terrainTexture_1 = loadTerrain(terrain_1, 0);
+	this->terrainTexture_2 = loadTerrain(terrain_2, 0);
+	this->terrainTexture_3 = loadTerrain(terrain_3, 0);
+	this->blendMap = loadTerrain(blend_map, 4);
 
 	//Unbind.
 	glBindBuffer(GL_ARRAY_BUFFER, 0); //Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind.
@@ -475,6 +496,10 @@ void Terrain::draw(GLuint shaderProgram)
 	glActiveTexture(GL_TEXTURE3);//Enable the texture.
 	glBindTexture(GL_TEXTURE_2D, this->terrainTexture_3);
 	glUniform1i(glGetUniformLocation(shaderProgram, "TerrainTexture_3"), 3);
+
+	glActiveTexture(GL_TEXTURE4);//Enable the texture.
+	glBindTexture(GL_TEXTURE_2D, this->blendMap);
+	glUniform1i(glGetUniformLocation(shaderProgram, "blendMap"), 4);
 
 	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);//Unbind vertex.
