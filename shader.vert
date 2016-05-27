@@ -12,6 +12,7 @@ uniform mat4 MVP;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec3 lightPos;
 
 //Define any out variables for the fragment shader.
 out vec3 FragPos;

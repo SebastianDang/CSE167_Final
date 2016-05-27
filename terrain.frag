@@ -1,5 +1,41 @@
 #version 330 core
 
+//Setup the different light sources.
+uniform struct DirLight {//Directional Light
+	bool on;
+    vec3 direction;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+} dirLight;
+
+uniform struct PointLight {//Point Light
+	bool on;
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float quadratic;
+} pointLight;
+
+uniform struct SpotLight {//Spot Light
+	bool on;
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+	float quadratic;
+
+	vec3 direction;
+	float spotCutoff;
+	float spotExponent;
+} spotLight;
+
+uniform vec3 lightColor;
+uniform vec3 viewPos;
+uniform samplerCube skybox;
+uniform float reflect_intensity;
+
 uniform sampler2D TerrainTexture_0;
 uniform sampler2D TerrainTexture_1;
 uniform sampler2D TerrainTexture_2;
@@ -33,8 +69,14 @@ void main()
 	vec4 TerrainTexture_3_color = texture(TerrainTexture_3, tiledCoords) * blendMapColor.b;
 	 
 	total_color += TerrainTexture_0_color + TerrainTexture_1_color + TerrainTexture_2_color + TerrainTexture_3_color;
-	color = total_color;
-	//color = texture(blendMap, FragTexCoords);
 
+	//Reflection
+	vec3 I = normalize(FragPos - viewPos);
+	vec3 R = reflect(I, normalize(FragNormal));
+	//vec4 reflect_color = texture(skybox, R) * reflect_intensity;
+	
+	//total_color += reflect_color;
+
+	color = total_color;
 }
 

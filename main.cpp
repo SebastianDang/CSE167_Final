@@ -39,6 +39,8 @@ void setup_opengl_settings()
 {
 	// Setup GLEW
 	setup_glew();
+	// Enable multisampling
+	glEnable(GL_MULTISAMPLE);
 	// Enable depth buffering
 	glEnable(GL_DEPTH_TEST);
 	// Related to shaders and z value comparisons for the depth buffer

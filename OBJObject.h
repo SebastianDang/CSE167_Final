@@ -18,22 +18,15 @@ private:
 	Material objMaterial;//Material
 	int material;//Material selection
 
-	DirLight dirLight;
-	PointLight pointLight;
-	SpotLight spotLight;
-
 	//Parse the object to create it.
 	void parse(const char* filepath);
 
 	//Setup initial object materials, lighting.
 	void setupObject();
 	void setupMaterial();
-	void setupLighting();
 
 	//Update object properties using these.
 	void updateMaterial(GLuint shaderProgram);
-	void updateSelectLighting();
-	void updateLighting(GLuint shaderProgram);
 
 public:
 	/* Object constructor and setups */
@@ -43,11 +36,7 @@ public:
 	//Keep track of world in relation to the object.
 	glm::mat4 toWorld;
 
-	int light_selection;
-
-	/* Object set up methods */
 	void draw(GLuint shaderProgram);
-
 };
 
 #endif

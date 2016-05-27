@@ -45,12 +45,13 @@ private:
 
 public:
 	//Constructor methods.
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map);
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map);
+	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, GLuint skybox);
+	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map, GLuint skybox);
 	~Terrain();
 
 	//Draw and upate methods.
 	void toggleDrawMode();
 	void draw(GLuint shaderProgram);
+	GLuint skybox_texture;
 };
 #endif

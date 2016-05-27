@@ -24,7 +24,7 @@ public:
 	glm::vec3 trackBallMapping(glm::vec3 point);
 
 	void camera_rotate(glm::vec3 v, glm::vec3 w);
-	void translate(glm::vec3 v, glm::vec3 w);
+	void camera_translate(glm::vec3 v, glm::vec3 w);
 	void zoom(double y);
 
 	void window_updateCamera();

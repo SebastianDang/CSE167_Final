@@ -29,6 +29,7 @@ public:
 	~SkyBox();
 
 	void draw(GLuint);
+	GLuint getSkyBox();
 };
 
 #endif

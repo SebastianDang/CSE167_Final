@@ -253,3 +253,8 @@ void SkyBox::draw(GLuint shaderProgram)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 }
+
+GLuint SkyBox::getSkyBox()
+{
+	return this->cubemapTexture;
+}

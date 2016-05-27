@@ -39,6 +39,7 @@ uniform struct SpotLight {//Spot Light
 	float spotExponent;
 } spotLight;
 
+uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform samplerCube skybox;
 uniform float reflect_intensity;
@@ -89,7 +90,6 @@ void main()
 	vec4 reflect_color = texture(skybox, R) * reflect_intensity;
 	//Combined
 	color = diffuse_color + reflect_color;
-
 }
 
 //Calculates the color when using a directional light.

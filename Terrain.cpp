@@ -1,9 +1,10 @@
 #include "Terrain.h"
+#include "SkyBox.h"
 #include <time.h>
 
 using namespace std;
 
-#define SIZE 50
+#define SIZE 800
 #define VERTEX_COUNT 128
 #define MAX_HEIGHT 50
 #define MAX_DISPLACEMENT 0.5f
@@ -11,7 +12,7 @@ using namespace std;
 #define DRAW_WIREFRAME 1
 
 /* Flat Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
-Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map)
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, GLuint skybox)
 {
 	//Setup the terrain.
 	this->x = x_d * SIZE;
@@ -28,7 +29,7 @@ Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrai
 }
 
 /* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
-Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map)
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map,  GLuint skybox)
 {
 	//Setup the terrain.
 	this->x = x_d * SIZE;
@@ -39,7 +40,7 @@ Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrai
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	this->setupHeightMap(height_map, 128.0f, 4.0f);
+	this->setupHeightMap(height_map, 4.0f, 4.0f);
 	//Load the texture and setup VAO, VBO for the terrains.
 	this->setupTerrain(terrain_0, terrain_1, terrain_2, terrain_3, blend_map);
 }
@@ -467,7 +468,9 @@ void Terrain::draw(GLuint shaderProgram)
 	//Update heights.
 	glUniform1f(glGetUniformLocation(shaderProgram, "max_height"), this->max_height);
 	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
-
+	//Update viewPos.
+	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
+	glUniform1f(glGetUniformLocation(shaderProgram, "reflect_intensity"), 100.0f / 100.0f);
 	glDisable(GL_CULL_FACE);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
@@ -500,6 +503,10 @@ void Terrain::draw(GLuint shaderProgram)
 	glActiveTexture(GL_TEXTURE4);//Enable the texture.
 	glBindTexture(GL_TEXTURE_2D, this->blendMap);
 	glUniform1i(glGetUniformLocation(shaderProgram, "blendMap"), 4);
+
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, this->skybox_texture);
+	glUniform1i(glGetUniformLocation(shaderProgram, "skybox"), 4);
 
 	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);//Unbind vertex.

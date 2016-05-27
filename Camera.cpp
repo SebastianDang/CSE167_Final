@@ -99,7 +99,7 @@ void Camera::camera_rotate(glm::vec3 v, glm::vec3 w)
 }
 
 /* Translate the object in camera space (x,y). */
-void Camera::translate(glm::vec3 v, glm::vec3 w)
+void Camera::camera_translate(glm::vec3 v, glm::vec3 w)
 {
 	//Calculate the translation.
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.

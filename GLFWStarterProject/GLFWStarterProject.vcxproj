@@ -27,6 +27,7 @@
     <ClInclude Include="..\Definitions.h" />
     <ClInclude Include="..\Geode.h" />
     <ClInclude Include="..\Group.h" />
+    <ClInclude Include="..\Light.h" />
     <ClInclude Include="..\MatrixTransform.h" />
     <ClInclude Include="..\Node.h" />
     <ClInclude Include="..\Pod.h" />
@@ -46,6 +47,7 @@
     <ClCompile Include="..\Cylinder.cpp" />
     <ClCompile Include="..\Geode.cpp" />
     <ClCompile Include="..\Group.cpp" />
+    <ClCompile Include="..\Light.cpp" />
     <ClCompile Include="..\MatrixTransform.cpp" />
     <ClCompile Include="..\Node.cpp" />
     <ClCompile Include="..\Pod.cpp" />
