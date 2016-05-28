@@ -1,18 +1,12 @@
 #include "OBJObject.h"
 #include "Window.h"
 
-#define DEBUG 0
-#define MOVE_STEP 1.0f
-#define SCALE_UP 1.2f
-#define SCALE_DOWN 0.8f
-#define SPOT_CUTOFF 30.0f
-
 using namespace std;
 
 /* Initialize the object, parse it and set up buffers. */
 OBJObject::OBJObject(const char *filepath, int material) 
 {
-	//Initialize World
+	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.

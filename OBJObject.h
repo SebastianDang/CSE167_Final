@@ -36,6 +36,7 @@ public:
 	//Keep track of world in relation to the object.
 	glm::mat4 toWorld;
 
+	//Draw.
 	void draw(GLuint shaderProgram);
 };
 

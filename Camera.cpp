@@ -3,15 +3,26 @@
 using namespace std;
 
 /* Setup the camera. */
-Camera::Camera()
+Camera::Camera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
 {
-	setupCamera();
+	setupCamera(e, d, up);
 }
 
 /* Deconstructor to safely delete when finished. */
 Camera::~Camera()
 {
 
+}
+
+/* Setup camera for the object. */
+void Camera::setupCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up) {
+	//Get 3 variables for the camera.
+	this->camera.position = e;
+	this->camera.lookat = d;
+	this->camera.up = up;
+	//Set up the rest of the camera.
+	this->camera.direction = glm::normalize(camera.position - camera.lookat);
+	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
 }
 
 /* Returns the current camera's position. */
@@ -32,24 +43,29 @@ glm::vec3 Camera::get_cam_up()
 	return this->camera.up;
 }
 
-/* Setup default camera for the object (Assuming the object is at the center of the world). */
-void Camera::setupCamera() {
-	//Get 3 variables for the camera.
-	this->camera.position = Window::camera_pos;
-	this->camera.lookat = glm::vec3(0.0f, 0.0f, 0.0f);
-	this->camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
-	//Set up the rest of the camera.
-	this->camera.direction = glm::normalize(camera.position - camera.lookat);
-	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
+/* Updates the current camera's position. */
+glm::vec3 Camera::set_cam_pos(glm::vec3 update)
+{
+	this->camera.position = update;
+	updateCamera();
 }
 
-/* Update the camera if passed in camera components. Get Camera coordinates and values from the Window class. */
-void Camera::updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
+/* Updates the current camera's lookat vector. */
+glm::vec3 Camera::set_cam_look_at(glm::vec3 update)
 {
-	//Get 3 variables for the camera.
-	this->camera.position = e;
-	this->camera.lookat = d;
-	this->camera.up = up;
+	this->camera.lookat = update;
+	updateCamera();
+}
+
+/* Updates the current camera's up vector. */
+glm::vec3 Camera::set_cam_up(glm::vec3 update)
+{
+	this->camera.up = update;
+	updateCamera();
+}
+
+/* Update the camera variables. */
+void Camera::updateCamera() {
 	//Set up the rest of the camera.
 	this->camera.direction = glm::normalize(camera.position - camera.lookat);
 	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
@@ -94,7 +110,7 @@ void Camera::camera_rotate(glm::vec3 v, glm::vec3 w)
 		this->camera.position = glm::vec3(pos);
 		this->camera.up = glm::vec3(up);
 		//Update camera vectors.
-		updateCamera(camera.position, camera.lookat, camera.up);
+		updateCamera();
 	}
 }
 
@@ -114,11 +130,11 @@ void Camera::camera_translate(glm::vec3 v, glm::vec3 w)
 	this->camera.lookat += position_x;
 	this->camera.lookat += position_y;
 	//Update camera vectors.
-	updateCamera(camera.position, camera.lookat, camera.up);
+	updateCamera();
 }
 
 /* Translate the object in camera space (z). */
-void Camera::zoom(double y)
+void Camera::camera_zoom(double y)
 {
 	//Calculate the translation.
 	//float z = (float)glm::clamp(y, -0.25, 0.25);//Translate only in the Z coordinate.
@@ -133,7 +149,7 @@ void Camera::zoom(double y)
 		this->camera.position = zoom;
 	}
 	//Update camera vectors.
-	updateCamera(camera.position, camera.lookat, camera.up);
+	updateCamera();
 }
 
 /* [Window Class] Update the camera, based on the object's camera struct. */

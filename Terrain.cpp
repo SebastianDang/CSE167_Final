@@ -4,15 +4,15 @@
 
 using namespace std;
 
-#define SIZE 800
+#define SIZE 500
 #define VERTEX_COUNT 128
-#define MAX_HEIGHT 50
-#define MAX_DISPLACEMENT 0.5f
+#define MAX_HEIGHT 40
+#define MAX_DISPLACEMENT 0.01f
 #define DRAW_SHADED 0
 #define DRAW_WIREFRAME 1
 
 /* Flat Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
-Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, GLuint skybox)
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map)
 {
 	//Setup the terrain.
 	this->x = x_d * SIZE;
@@ -29,7 +29,7 @@ Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrai
 }
 
 /* Procedurally generated Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
-Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map,  GLuint skybox)
+Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map)
 {
 	//Setup the terrain.
 	this->x = x_d * SIZE;
@@ -40,7 +40,7 @@ Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrai
 	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
 	this->toWorld = translate*this->toWorld;
 	//Setup HeightMap
-	this->setupHeightMap(height_map, 4.0f, 4.0f);
+	this->setupHeightMap(height_map, 16.0f, 4.0f);
 	//Load the texture and setup VAO, VBO for the terrains.
 	this->setupTerrain(terrain_0, terrain_1, terrain_2, terrain_3, blend_map);
 }
@@ -169,7 +169,7 @@ void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range
 		containers.push_back(container);
 	}
 	//Perform smoothing.
-	diamond_square(0, VERTEX_COUNT - 1, 0, VERTEX_COUNT - 1, (int)glm::pow(2, n_smooth), (float)n_range);
+	diamond_square(0, VERTEX_COUNT-1, 0, VERTEX_COUNT-1, (int)glm::pow(2, n_smooth), (float)n_range);
 	updateNormals();
 	updateMaxMinHeight();
 }
@@ -504,13 +504,119 @@ void Terrain::draw(GLuint shaderProgram)
 	glBindTexture(GL_TEXTURE_2D, this->blendMap);
 	glUniform1i(glGetUniformLocation(shaderProgram, "blendMap"), 4);
 
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, this->skybox_texture);
-	glUniform1i(glGetUniformLocation(shaderProgram, "skybox"), 4);
-
 	glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);//Unbind vertex.
 
 	//Set it back to fill.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+/* Update the shader with new updated vertices. */
+void Terrain::update()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, this->containers.size() * sizeof(Container), &this->containers[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+/* Stitches any attached terrains. */
+void Terrain::stitch_all()
+{
+	stitch_top();
+	stitch_bottom();
+	stitch_left();
+	stitch_right();
+}
+
+/* Stitches the terrain above it. AKA, negative z from this one. */
+void Terrain::stitch_top()
+{
+	//Base case to check if there's a defined top.
+	if (!terrain_top)
+		return;
+	//Perform stitching.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		glm::vec3 cur_top = this->vertices[i];
+		glm::vec3 next_bottom = this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i];
+		float midpoint = (cur_top.y + next_bottom.y) / 2.0f;
+
+		this->vertices[i].y = midpoint;
+		this->containers[i].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i].y = midpoint;
+		this->terrain_top->containers[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i].vertex.y = midpoint;
+		this->terrain_top->update();
+	}
+
+}
+
+/* Stitches the terrain above it. AKA, positive z from this one. */
+void Terrain::stitch_bottom()
+{
+	//Base case to check if there's a defined bottom.
+	if (!terrain_bottom)
+		return;
+	//Perform stitching.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		glm::vec3 cur_bottom = this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
+		glm::vec3 next_top = this->terrain_bottom->vertices[i];
+		float midpoint = (cur_bottom.y + next_top.y) / 2.0f;
+
+		this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].y = midpoint;
+		this->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_bottom->vertices[i].y = midpoint;
+		this->terrain_bottom->containers[i].vertex.y = midpoint;
+		this->terrain_bottom->update();
+	}
+}
+
+/* Stitches the terrain to the left of it. */
+void Terrain::stitch_left()
+{
+	//Base case to check if there's a defined left.
+	if (!terrain_left)
+		return;
+	//Perform stitching.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		glm::vec3 cur_left = this->vertices[(VERTEX_COUNT*i)];
+		glm::vec3 next_right = this->terrain_left->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)];
+		float midpoint = (cur_left.y + next_right.y) / 2.0f;
+
+		this->vertices[(VERTEX_COUNT*i)].y = midpoint;
+		this->containers[(VERTEX_COUNT*i)].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_left->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].y = midpoint;
+		this->terrain_left->containers[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
+		this->terrain_left->update();
+	}
+}
+
+/* Stitches the terrain to the right of it. */
+void Terrain::stitch_right()
+{
+	//Base case to check if there's a defined right.
+	if (!terrain_right)
+		return;
+	//Perform stitching.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		glm::vec3 cur_right = this->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)];
+		glm::vec3 next_left = this->terrain_right->vertices[(VERTEX_COUNT*i)];
+		float midpoint = (cur_right.y + next_left.y) / 2.0f;
+
+		this->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].y = midpoint;
+		this->containers[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_right->vertices[(VERTEX_COUNT*i)].y = midpoint;
+		this->terrain_right->containers[(VERTEX_COUNT*i)].vertex.y = midpoint;
+		this->terrain_right->update();
+	}
 }

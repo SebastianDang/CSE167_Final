@@ -7,6 +7,7 @@
 #include "Terrain.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Scenery.h"
 
 using namespace std;
 
@@ -23,11 +24,6 @@ const char* window_title = "CSE 167 Final";
 #define CAMERA_2 2
 #define CAMERA_3 3
 
-//Default camera parameters
-glm::vec3 cam_pos(0.0f, 300.0f, 300.0f);	// e  | Position of camera					0 0 20
-glm::vec3 cam_look_at(0.0f, 0.0f, 0.0f);	// d  | This is where the camera looks at	0 0 0
-glm::vec3 cam_up(0.0f, 1.0f, 0.0f);			// up | What orientation "up" is			0 1 0
-
 //Define any cameras here.
 Camera * world_camera;
 
@@ -36,7 +32,7 @@ OBJObject * object_1;
 
 //Define any environment variables here. We should always have the skybox!
 SkyBox * skyBox;
-Terrain * terrain;
+Scenery * scenery;
 Light * world_light;
 
 //Define any shaders here.
@@ -45,27 +41,26 @@ GLint shaderProgram_skybox;
 GLint shaderProgram_terrain;
 
 //Window properties
-int Window::width;
-int Window::height;
-double Window::x;
-double Window::y;
-int Window::mouse_status = IDLE;
-int Window::camera_mode = CAMERA_WORLD;
-glm::vec3 Window::camera_pos = cam_pos;
+int Window::width;//Width of the window.
+int Window::height;//Height of the window.
+double Window::x;//Current mouse x coordinate.
+double Window::y;//Current mouse y coordinate.
+int Window::mouse_status = IDLE;//Define the mouse status for any clicks.
 glm::vec3 Window::lastPoint;//Last point clicked.
-glm::mat4 Window::P;
-glm::mat4 Window::V;
+int Window::camera_mode = CAMERA_WORLD;//Defined camera for controls.
+glm::vec3 Window::camera_pos = glm::vec3(0.0f, 300.0f, 300.0f);//Default.
+glm::vec3 Window::camera_look_at = glm::vec3(0.0f, 0.0f, 0.0f);//Default.
+glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default. 
+glm::mat4 Window::P;//Perspective.
+glm::mat4 Window::V;//View.
 
 void Window::initialize_objects()
 {
-	//Initialize any cameras.
-	world_camera = new Camera();
-
-	//Initialize the light.
-	world_light = new Light();
-
-	//Load the skybox.
-	skyBox = new SkyBox();
+	//Initialize world variables.
+	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
+	world_light = new Light();//Initialize the global light.
+	skyBox = new SkyBox();//Initialize the default skybox.
+	scenery = new Scenery(8, 8);
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
@@ -73,8 +68,7 @@ void Window::initialize_objects()
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("../obj/pod.obj", 1);
 
-	//Initialize any terrains.
-	terrain = new Terrain(0, 0, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", "../terrain/blend_map.ppm", "../terrain/height_map.ppm", skyBox->getSkyBox());
+	//Initialize any terrains here.
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
@@ -85,10 +79,10 @@ void Window::initialize_objects()
 	#else
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("./obj/pod.obj", 3);
+	object_1 = new OBJObject("../obj/pod.obj", 1);
 
-	//Initialize any terrains.
-	terrain = new Terrain(0, 0, "./terrain/texture_0.ppm", "./terrain/texture_1.ppm", "./terrain/texture_2.ppm", "./terrain/texture_3.ppm", "./terrain/blend_map.ppm");
+	//Initialize any terrains here.
+	terrain = new Terrain(0, 0, "./terrain/texture_0.ppm", "./terrain/texture_1.ppm", "./terrain/texture_2.ppm", "./terrain/texture_3.ppm", "./terrain/blend_map.ppm", "./terrain/height_map.ppm", skyBox->getSkyBox());
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("shader.vert", "shader.frag");
@@ -108,7 +102,7 @@ void Window::clean_up()
 	delete(world_light);
 	delete(skyBox);
 	delete(object_1);
-	delete(terrain);
+	delete(scenery);
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_skybox);
@@ -162,7 +156,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 	if (height > 0)
 	{
 		P = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-		V = glm::lookAt(cam_pos, cam_look_at, cam_up);
+		V = glm::lookAt(Window::camera_pos, Window::camera_look_at, Window::camera_up);
 	}
 }
 
@@ -195,7 +189,7 @@ void Window::redrawScene()
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
-	terrain->draw(shaderProgram_terrain);
+	scenery->draw(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_skybox);
@@ -225,7 +219,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		if (key == GLFW_KEY_T){
-			terrain->toggleDrawMode();
+
 		}
 	}
 }
@@ -291,7 +285,7 @@ void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double y
 	//Controls for the world camera.
 	if (Window::camera_mode == CAMERA_WORLD)
 	{
-		world_camera->zoom(yoffset);
+		world_camera->camera_zoom(yoffset);
 		world_camera->window_updateCamera();
 	}
 }
@@ -299,9 +293,8 @@ void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double y
 /* Update the camera given e, d, and up vectors. We essentially rewrite the current camera. */
 void Window::updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
 {
-	cam_pos = e;
-	Window::camera_pos = cam_pos;
-	cam_look_at = d;
-	cam_up = up;
+	Window::camera_pos = e;
+	Window::camera_look_at = d;
+	Window::camera_up = up;
 	Window::V = glm::lookAt(e, d, up);
 }

@@ -8,10 +8,6 @@
 class Terrain
 {
 private:
-	//Determine the terrain's position in the world.
-	float x;
-	float z;
-	glm::mat4 toWorld;
 	//Determine the textures mapped to the terrain, using a blend map.
 	GLuint terrainTexture_0;
 	GLuint terrainTexture_1;
@@ -21,12 +17,6 @@ private:
 	//Keep track of the max and min height if height map is loaded.
 	float max_height;
 	float min_height;
-	//Variables to keep track of information.
-	std::vector<Container> containers;//[v, vn, (s,t)]
-	std::vector<glm::vec3> vertices;//v
-	std::vector<glm::vec3> normals;//vn
-	std::vector<glm::vec2> texCoords;//(s,t)
-	std::vector<unsigned int> indices;//indices.
 	GLuint VAO, VBO, EBO;
 	//Flat terrain map.
 	void setupHeightMap();
@@ -45,13 +35,34 @@ private:
 
 public:
 	//Constructor methods.
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, GLuint skybox);
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map, GLuint skybox);
+	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map);
+	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map);
 	~Terrain();
-
-	//Draw and upate methods.
+	//Determine the terrain's position in the world.
+	float x;
+	float z;
+	glm::mat4 toWorld;
+	//Variables to keep track of information.
+	std::vector<Container> containers;//[v, vn, (s,t)]
+	std::vector<glm::vec3> vertices;//v
+	std::vector<glm::vec3> normals;//vn
+	std::vector<glm::vec2> texCoords;//(s,t)
+	std::vector<unsigned int> indices;//indices.
+	//Draw and update methods.
 	void toggleDrawMode();
 	void draw(GLuint shaderProgram);
-	GLuint skybox_texture;
+	//Keep track of surrounding terrains to stitch them together.
+	Terrain * terrain_top;
+	Terrain * terrain_bottom;
+	Terrain * terrain_left;
+	Terrain * terrain_right;
+	//Functions to stitch the edges.
+	void update();
+	void stitch_all();
+	void stitch_top();
+	void stitch_bottom();
+	void stitch_left();
+	void stitch_right();
+
 };
 #endif

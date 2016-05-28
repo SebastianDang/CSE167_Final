@@ -15,6 +15,7 @@
 #include "shader.h"
 #include "OBJObject.h"
 #include "SkyBox.h"
+#include "Camera.h"
 
 class Window
 {
@@ -31,6 +32,8 @@ public:
 	static glm::mat4 P;
 	static glm::mat4 V;
 	static glm::vec3 camera_pos;
+	static glm::vec3 camera_look_at;
+	static glm::vec3 camera_up;
 	static void initialize_objects();
 	static void clean_up();
 	static GLFWwindow* create_window(int width, int height);

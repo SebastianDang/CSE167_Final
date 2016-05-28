@@ -31,6 +31,7 @@
     <ClInclude Include="..\MatrixTransform.h" />
     <ClInclude Include="..\Node.h" />
     <ClInclude Include="..\Pod.h" />
+    <ClInclude Include="..\Scenery.h" />
     <ClInclude Include="..\SkyBox.h" />
     <ClInclude Include="..\main.h" />
     <ClInclude Include="..\OBJObject.h" />
@@ -51,6 +52,7 @@
     <ClCompile Include="..\MatrixTransform.cpp" />
     <ClCompile Include="..\Node.cpp" />
     <ClCompile Include="..\Pod.cpp" />
+    <ClCompile Include="..\Scenery.cpp" />
     <ClCompile Include="..\SkyBox.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\OBJObject.cpp" />
