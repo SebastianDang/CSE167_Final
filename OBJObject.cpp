@@ -3,9 +3,16 @@
 
 using namespace std;
 
+#define RUN_SPEED = 20
+#define TURN_SPEED = 160
+
+
 /* Initialize the object, parse it and set up buffers. */
 OBJObject::OBJObject(const char *filepath, int material) 
 {
+	//Initialize movement.
+	this->currentSpeed = 0.0f;
+	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
 	this->material = material;//Set the material to the passed in material number!
@@ -215,4 +222,7 @@ void OBJObject::draw(GLuint shaderProgram)
 	glBindVertexArray(0);
 }
 
+void OBJObject::movement()
+{
+}
 

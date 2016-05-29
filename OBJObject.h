@@ -28,6 +28,10 @@ private:
 	//Update object properties using these.
 	void updateMaterial(GLuint shaderProgram);
 
+	//Object movement.
+	float currentSpeed;
+	float currentTurnSpeed;
+
 public:
 	/* Object constructor and setups */
 	OBJObject(const char* filepath, int material);
@@ -38,6 +42,13 @@ public:
 
 	//Draw.
 	void draw(GLuint shaderProgram);
+
+	//Object movement.
+	void movement();
+	void W_movement();
+	void A_movement();
+	void S_movement();
+	void D_movement();
 };
 
 #endif

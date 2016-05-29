@@ -2,6 +2,10 @@
 
 using namespace std;
 
+#define MAX_CAMERA_PITCH 35.0f//NEGATIVE ANGLE
+#define ZOOM_MIN_DISTANCE 2.0f
+#define ZOOM_MAX_DISTANCE 50.0f
+
 /* Setup the camera. */
 Camera::Camera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
 {
@@ -71,64 +75,35 @@ void Camera::updateCamera() {
 	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
 }
 
-/* Trackball mapping used to map coordinates in a sphere instead of window coordinates x and y. */
-glm::vec3 Camera::trackBallMapping(glm::vec3 point)
-{
-	glm::vec3 trackball_p;    // Vector v is the synthesized 3D position of the mouse location on the trackball.
-	float depth;     // this is the depth of the mouse location: the delta between the plane through the center of the trackball and the z position of the mouse.
-	trackball_p.x = (float)((2.0*point.x - Window::width) / Window::width);   // this calculates the mouse X position in trackball coordinates, which range from -1 to +1.
-	trackball_p.y = (float)((Window::height - 2.0*point.y) / Window::height);   // this does the equivalent to the above for the mouse Y position.
-	trackball_p.z = 0.0;   // initially the mouse z position is set to zero, but this will change below.
-	depth = (float)glm::length(trackball_p);    // this is the distance from the trackball's origin to the mouse location, without considering depth (=in the plane of the trackball's origin).
-	depth = (float)((depth<1.0) ? depth : 1.0);   // this limits d to values of 1.0 or less to avoid square roots of negative values in the following line.
-	trackball_p.z = (float)(sqrtf((float)1.001 - (float)(depth*depth)));  // this calculates the Z coordinate of the mouse position on the trackball, based on Pythagoras: v.z*v.z + d*d = 1*1.
-	trackball_p = glm::normalize(trackball_p); // Still need to normalize, since we only capped d, not v.
-	return trackball_p;  // return the mouse location on the surface of the trackball.
-}
-
 /* Rotate around the middle of the screen based on mouse drag from v to w. */
-void Camera::camera_rotate(glm::vec3 v, glm::vec3 w)
-{
-	//Hold camera variables in vec4 for matrix multiplication.
-	glm::vec4 pos = glm::vec4(this->camera.position, 1.0f);
-	glm::vec4 up = glm::vec4(this->camera.up, 1.0f);
-
-	glm::vec3 direction = w - v;
-	float velocity = (float)glm::length(direction);
-	if (velocity > 0.0001)
-	{
-		//Calculate Rotation Axis.
-		glm::vec3 rotAxis = glm::cross(v, w);
-		//Calculate Rotation Angle.
-		float rot_angle = acos(glm::dot(v, w));
-		//Calculate Rotation.
-		glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (rot_angle / 180.0f * glm::pi<float>()), rotAxis);
-		//Calculate Camera.
-		pos = rotate*pos;
-		up = rotate*up;
-		//Update camera.
-		this->camera.position = glm::vec3(pos);
-		this->camera.up = glm::vec3(up);
-		//Update camera vectors.
-		updateCamera();
-	}
-}
-
-/* Translate the object in camera space (x,y). */
-void Camera::camera_translate(glm::vec3 v, glm::vec3 w)
+void Camera::camera_rotate_around(glm::vec3 v, glm::vec3 w)
 {
 	//Calculate the translation.
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
 	translate_v *= (float)(1 / (float)Window::width);//Scale the translation.
-													 //Calculate Camera.
-	glm::vec3 position_x = this->camera.right*translate_v.x;//Moving left and right.
-	glm::vec3 position_y = this->camera.up*translate_v.y;//Moving left and right.
-														 //Moving along the xy plane.
-	this->camera.position += position_x;
-	this->camera.position += position_y;
-	//Moving the lookat, to give it a strafing effect.
-	this->camera.lookat += position_x;
-	this->camera.lookat += position_y;
+	//Calculate the new (y) position.
+	glm::vec3 position_y = translate_v.y*this->camera.up;
+	//Moving along the xy plane.
+	glm::vec3 new_position = this->camera.position + position_y;
+	glm::vec3 cur_distance = new_position - this->camera.lookat;
+	//Check to make sure it doesn't hit a max.
+	glm::vec3 horizontal_pos = glm::vec3(this->camera.position.x, 0.0f, this->camera.position.z);
+	glm::vec3 horizontal_lookat = glm::vec3(this->camera.lookat.x, 0.0f, this->camera.lookat.z);
+	glm::vec3 horizontal_distance = horizontal_pos - horizontal_lookat;
+	float angle = glm::dot(cur_distance, horizontal_distance) / (glm::length(cur_distance)*glm::length(horizontal_distance));
+	//Check if the angle is greater than 0.0f and less than MAX_CAMERA_PITCH
+	if (angle >= glm::radians(MAX_CAMERA_PITCH))
+	{
+		this->camera.position = new_position;
+		if (this->camera.position.y <= 0.0f)
+		{
+			this->camera.position.y = 0.0f;
+		}
+	}
+	//Calculate the new (x, z) position.
+	glm::vec3 position_x = translate_v.x*this->camera.right;
+	glm::vec3 new_position_x = this->camera.position + position_x;
+	this->camera.position = new_position_x;
 	//Update camera vectors.
 	updateCamera();
 }
@@ -144,7 +119,7 @@ void Camera::camera_zoom(double y)
 	glm::vec3 displacement = direction * z;//Multiply Z so it moves in the correct direction (towards the origin).
 	glm::vec3 zoom = this->camera.position - displacement;
 	//Zoom is limited. Calculate threshold.
-	if (glm::distance(zoom, camera.lookat) > 2)
+	if ((glm::distance(zoom, camera.lookat) > ZOOM_MIN_DISTANCE) && (glm::distance(zoom, camera.lookat) < ZOOM_MAX_DISTANCE))
 	{
 		this->camera.position = zoom;
 	}
@@ -157,15 +132,5 @@ void Camera::window_updateCamera()
 {
 	Window::updateCamera(this->camera.position, this->camera.lookat, this->camera.up);
 }
-
-
-
-
-
-
-
-
-
-
 
 

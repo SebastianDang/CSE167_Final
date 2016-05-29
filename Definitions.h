@@ -63,5 +63,4 @@ struct Global_Camera {//Global Camera.
 	glm::vec3 right;
 };
 
-
 #endif

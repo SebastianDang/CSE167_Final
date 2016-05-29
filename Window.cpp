@@ -48,7 +48,7 @@ double Window::y;//Current mouse y coordinate.
 int Window::mouse_status = IDLE;//Define the mouse status for any clicks.
 glm::vec3 Window::lastPoint;//Last point clicked.
 int Window::camera_mode = CAMERA_WORLD;//Defined camera for controls.
-glm::vec3 Window::camera_pos = glm::vec3(0.0f, 300.0f, 300.0f);//Default.
+glm::vec3 Window::camera_pos = glm::vec3(0.0f, 0.0f, 20.0f);//Default.
 glm::vec3 Window::camera_look_at = glm::vec3(0.0f, 0.0f, 0.0f);//Default.
 glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default. 
 glm::mat4 Window::P;//Perspective.
@@ -200,15 +200,23 @@ void Window::redrawScene()
 /* Handle Key input. */
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	/* Any global key definitions */
+	//Define shift keys for capital letters.
+	int Lshift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
+	int Rshift = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT);
+	//Define movement keys.
+	int wKey = glfwGetKey(window, GLFW_KEY_W);
+	int aKey = glfwGetKey(window, GLFW_KEY_A);
+	int sKey = glfwGetKey(window, GLFW_KEY_S);
+	int dKey = glfwGetKey(window, GLFW_KEY_D);
+
 	//Controls for the world camera.
 	if (Window::camera_mode == CAMERA_WORLD)
 	{
 
-
-
-
 	}
-	/* Global Keys*/
+
+
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
@@ -239,14 +247,13 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 		//On left drag, we perform rotations. Relative to the object.
 		if (Window::mouse_status == LEFT_HOLD)
 		{
-			world_camera->camera_rotate(world_camera->trackBallMapping(Window::lastPoint), world_camera->trackBallMapping(point));//Use this to orbit the camera.
+			world_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
 			world_camera->window_updateCamera();
 		}
 		//On right drag, we perform translations. Relative to the object.
 		if (Window::mouse_status == RIGHT_HOLD)
 		{
-			world_camera->camera_translate(Window::lastPoint, point);
-			world_camera->window_updateCamera();
+
 		}
 	}
 }

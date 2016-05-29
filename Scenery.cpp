@@ -8,8 +8,8 @@ Scenery::Scenery(int width, int height)
 {
 	this->width = width;
 	this->height = height;
-	generateTerrains();
-	stitchTerrains();
+	//generateTerrains();
+	//stitchTerrains();
 }
 
 /* Deconstructor to safely delete when finished. */
