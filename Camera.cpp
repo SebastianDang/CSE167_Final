@@ -1,8 +1,9 @@
 #include "Camera.h"
+#include "OBJObject.h"
 
 using namespace std;
 
-#define MAX_CAMERA_PITCH 35.0f//NEGATIVE ANGLE
+#define MAX_CAMERA_PITCH 40.0f//NEGATIVE ANGLE
 #define ZOOM_MIN_DISTANCE 2.0f
 #define ZOOM_MAX_DISTANCE 50.0f
 
@@ -70,7 +71,6 @@ glm::vec3 Camera::set_cam_up(glm::vec3 update)
 
 /* Update the camera variables. */
 void Camera::updateCamera() {
-	//Set up the rest of the camera.
 	this->camera.direction = glm::normalize(camera.position - camera.lookat);
 	this->camera.right = glm::normalize(glm::cross(camera.up, camera.direction));
 }
@@ -80,30 +80,38 @@ void Camera::camera_rotate_around(glm::vec3 v, glm::vec3 w)
 {
 	//Calculate the translation.
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
-	translate_v *= (float)(1 / (float)Window::width);//Scale the translation.
+	translate_v *= (float)(1 / (5*(float)Window::width));//Scale the translation.
+	//Get the old position values for x.
+	glm::vec3 cur_position_x = this->camera.position;
+	float cur_position_length_x = glm::length(cur_position_x);
+	//Calculate the new (x, z) position.
+	glm::vec3 position_x = translate_v.x*this->camera.right;
+	glm::vec3 new_position_x = this->camera.position + position_x;
+	new_position_x = cur_position_length_x * glm::normalize(new_position_x);
+	//Update the new camera position for x.
+	this->camera.position = new_position_x;
+	//Get the old position values for y.
+	glm::vec3 cur_position_y = this->camera.position;
+	float cur_position_length = glm::length(cur_position_y);
 	//Calculate the new (y) position.
 	glm::vec3 position_y = translate_v.y*this->camera.up;
-	//Moving along the xy plane.
-	glm::vec3 new_position = this->camera.position + position_y;
-	glm::vec3 cur_distance = new_position - this->camera.lookat;
+	glm::vec3 new_position_y = this->camera.position + position_y;
+	new_position_y = cur_position_length * glm::normalize(new_position_y);
+	glm::vec3 cur_distance = new_position_y - this->camera.lookat;
 	//Check to make sure it doesn't hit a max.
 	glm::vec3 horizontal_pos = glm::vec3(this->camera.position.x, 0.0f, this->camera.position.z);
 	glm::vec3 horizontal_lookat = glm::vec3(this->camera.lookat.x, 0.0f, this->camera.lookat.z);
 	glm::vec3 horizontal_distance = horizontal_pos - horizontal_lookat;
 	float angle = glm::dot(cur_distance, horizontal_distance) / (glm::length(cur_distance)*glm::length(horizontal_distance));
-	//Check if the angle is greater than 0.0f and less than MAX_CAMERA_PITCH
+	//Update the new camera position for y. Check if the angle is greater than 0.0f and less than MAX_CAMERA_PITCH
 	if (angle >= glm::radians(MAX_CAMERA_PITCH))
 	{
-		this->camera.position = new_position;
+		this->camera.position = new_position_y;
 		if (this->camera.position.y <= 0.0f)
 		{
 			this->camera.position.y = 0.0f;
 		}
 	}
-	//Calculate the new (x, z) position.
-	glm::vec3 position_x = translate_v.x*this->camera.right;
-	glm::vec3 new_position_x = this->camera.position + position_x;
-	this->camera.position = new_position_x;
 	//Update camera vectors.
 	updateCamera();
 }
@@ -112,7 +120,6 @@ void Camera::camera_rotate_around(glm::vec3 v, glm::vec3 w)
 void Camera::camera_zoom(double y)
 {
 	//Calculate the translation.
-	//float z = (float)glm::clamp(y, -0.25, 0.25);//Translate only in the Z coordinate.
 	float z = (float)y;
 	//Calculate new camera distance.
 	glm::vec3 direction = this->camera.direction;//position in relation to the origin.

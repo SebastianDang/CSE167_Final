@@ -253,7 +253,6 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 		//On right drag, we perform translations. Relative to the object.
 		if (Window::mouse_status == RIGHT_HOLD)
 		{
-
 		}
 	}
 }
