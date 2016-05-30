@@ -29,6 +29,7 @@ private:
 	void updateMaterial(GLuint shaderProgram);
 
 	//Object movement.
+	glm::vec3 currentDirection;
 	float currentSpeed;
 	float currentTurnSpeed;
 

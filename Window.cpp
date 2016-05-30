@@ -26,6 +26,7 @@ const char* window_title = "CSE 167 Final";
 
 //Define any cameras here.
 Camera * world_camera;
+Camera * object_1_camera;
 
 //Define any objects here.
 OBJObject * object_1;
@@ -60,13 +61,14 @@ void Window::initialize_objects()
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(8, 8);
+	scenery = new Scenery(1, 1);
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
 
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("../obj/pod.obj", 1);
+	object_1_camera = new Camera(object_1);
 
 	//Initialize any terrains here.
 
@@ -102,6 +104,7 @@ void Window::clean_up()
 	delete(world_light);
 	delete(skyBox);
 	delete(object_1);
+	delete(object_1_camera);
 	delete(scenery);
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
@@ -215,8 +218,35 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	{
 
 	}
-
-
+	//Controls for camera 1.
+	if (Window::camera_mode == CAMERA_1)
+	{
+		if (wKey == GLFW_PRESS)
+		{
+			object_1->W_movement();
+			object_1_camera->object_follow();
+			object_1_camera->window_updateCamera();
+		}
+		if (aKey == GLFW_PRESS)
+		{
+			object_1->A_movement();
+			object_1_camera->object_follow();
+			object_1_camera->window_updateCamera();
+		}
+		if (sKey == GLFW_PRESS)
+		{
+			object_1->S_movement();
+			object_1_camera->object_follow();
+			object_1_camera->window_updateCamera();
+		}
+		if (dKey == GLFW_PRESS)
+		{
+			object_1->D_movement();
+			object_1_camera->object_follow();
+			object_1_camera->window_updateCamera();
+		}
+	}
+	//---------- Anything below this will be global keys. ----------//
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
 	{
@@ -226,8 +256,13 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			//Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		if (key == GLFW_KEY_T){
-
+		if (key == GLFW_KEY_0){
+			Window::camera_mode = CAMERA_WORLD;
+			world_camera->window_updateCamera();
+		}
+		if (key == GLFW_KEY_1) {
+			Window::camera_mode = CAMERA_1;
+			object_1_camera->window_updateCamera();
 		}
 	}
 }
@@ -249,6 +284,20 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 		{
 			world_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
 			world_camera->window_updateCamera();
+		}
+		//On right drag, we perform translations. Relative to the object.
+		if (Window::mouse_status == RIGHT_HOLD)
+		{
+		}
+	}
+	//Controls for camera 1.
+	if (Window::camera_mode == CAMERA_1)
+	{
+		//On left drag, we perform rotations. Relative to the object.
+		if (Window::mouse_status == LEFT_HOLD)
+		{
+			object_1_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
+			object_1_camera->window_updateCamera();
 		}
 		//On right drag, we perform translations. Relative to the object.
 		if (Window::mouse_status == RIGHT_HOLD)
@@ -293,6 +342,12 @@ void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double y
 	{
 		world_camera->camera_zoom(yoffset);
 		world_camera->window_updateCamera();
+	}
+	//Controls for camera 1.
+	if (Window::camera_mode == CAMERA_1)
+	{
+		object_1_camera->camera_zoom(yoffset);
+		object_1_camera->window_updateCamera();
 	}
 }
 

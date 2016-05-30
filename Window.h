@@ -15,7 +15,6 @@
 #include "shader.h"
 #include "OBJObject.h"
 #include "SkyBox.h"
-#include "Camera.h"
 
 class Window
 {

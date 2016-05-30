@@ -3,18 +3,20 @@
 
 using namespace std;
 
-#define RUN_SPEED = 20
-#define TURN_SPEED = 160
+#define RUN_SPEED  5.0f
+#define TURN_SPEED  10.0f
 
 
 /* Initialize the object, parse it and set up buffers. */
 OBJObject::OBJObject(const char *filepath, int material) 
 {
 	//Initialize movement.
+	this->currentDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 	this->currentSpeed = 0.0f;
 	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
+	this->toWorld[3] = glm::vec4(0.0f, 0.0f, 20.0f, 1.0f);
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);
@@ -224,5 +226,42 @@ void OBJObject::draw(GLuint shaderProgram)
 
 void OBJObject::movement()
 {
+
+}
+
+void OBJObject::W_movement()
+{
+	glm::vec3 current_position = glm::vec3(this->toWorld[3]);
+	glm::vec3 displacement = this->currentDirection * RUN_SPEED;
+	glm::vec3 new_position = current_position + displacement;
+	this->toWorld[3] = glm::vec4(new_position, 1.0f);
+}
+
+void OBJObject::A_movement()
+{
+	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (TURN_SPEED / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::vec4 current_direction = glm::vec4(this->currentDirection, 1.0f);
+	current_direction = rotate * current_direction;
+	glm::vec3 new_direction = glm::vec3(current_direction);
+	this->currentDirection = glm::normalize(new_direction);
+	this->toWorld = toWorld * rotate;
+}
+
+void OBJObject::S_movement()
+{
+	glm::vec3 current_position = glm::vec3(this->toWorld[3]);
+	glm::vec3 displacement = this->currentDirection * RUN_SPEED;
+	glm::vec3 new_position = current_position - displacement;
+	this->toWorld[3] = glm::vec4(new_position, 1.0f);
+}
+
+void OBJObject::D_movement()
+{
+	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (-TURN_SPEED / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::vec4 current_direction = glm::vec4(this->currentDirection, 1.0f);
+	current_direction = rotate * current_direction;
+	glm::vec3 new_direction = glm::vec3(current_direction);
+	this->currentDirection = glm::normalize(new_direction);
+	this->toWorld = toWorld * rotate;
 }
 
