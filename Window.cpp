@@ -264,6 +264,8 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			Window::camera_mode = CAMERA_1;
 			object_1_camera->window_updateCamera();
 		}
+		if (key == GLFW_KEY_T) {
+		}
 	}
 }
 

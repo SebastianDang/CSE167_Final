@@ -63,6 +63,8 @@ public:
 	void stitch_bottom();
 	void stitch_left();
 	void stitch_right();
-
+	//Functions to get the height of the terrain.
+	float getHeight(glm::vec3 position);
+	float barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
 };
 #endif

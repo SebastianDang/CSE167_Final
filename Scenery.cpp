@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream> 
 
+#define TERRAIN_SIZE 500.0f
+
 /* Constructor to create a terrain map with a specified width and height. */
 Scenery::Scenery(int width, int height)
 {
@@ -69,4 +71,10 @@ void Scenery::draw(GLuint shaderProgram)
 	{
 		terrains[i]->draw(shaderProgram);
 	}
+}
+
+float Scenery::getTerrain(glm::vec3 position)
+{
+	float position_x = position.x / TERRAIN_SIZE;
+	float position_z = position.z / TERRAIN_SIZE;
 }

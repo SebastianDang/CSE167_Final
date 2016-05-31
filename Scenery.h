@@ -23,6 +23,8 @@ public:
 	void generateTerrains();
 	void stitchTerrains();
 
+	float getTerrain(glm::vec3 position);
+
 	void draw(GLuint shaderProgram);
 };
 #endif

@@ -1,6 +1,7 @@
 #include "Terrain.h"
 #include "SkyBox.h"
 #include <time.h>
+#include <math.h>
 
 using namespace std;
 
@@ -619,4 +620,43 @@ void Terrain::stitch_right()
 		this->terrain_right->containers[(VERTEX_COUNT*i)].vertex.y = midpoint;
 		this->terrain_right->update();
 	}
+}
+
+float Terrain::getHeight(glm::vec3 position)
+{
+	float terrain_x = position.x - this->x;
+	float terrain_z = position.z - this->z;
+
+	float gridSquareSize = (SIZE) / ((float)this->vertices.size() - 1);
+	int gridX = (int)floor(terrain_x / gridSquareSize);
+	int gridZ = (int)floor(terrain_z / gridSquareSize);
+
+	if (gridX >= ((float)this->vertices.size() - 1) || gridZ >= ((float)this->vertices.size() - 1) || gridX < 0 || gridZ < 0)
+	{
+		return 0;
+	}
+
+	float xCoord = fmod(terrain_x, gridSquareSize)/gridSquareSize;
+	float zCoord = fmod(terrain_z, gridSquareSize)/gridSquareSize;
+
+	float answer;
+	if (xCoord <= (1 - zCoord))
+	{
+		answer = barryCentric(glm::vec3(0.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord].y, 0.0f), glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord + 1].y, 0.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + xCoord + 1].y, 1.0f), glm::vec2(xCoord, zCoord));
+	}
+	else
+	{
+		answer = barryCentric(glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord + 1].y, 0.0f), glm::vec3(1.0f, this->vertices[(gridZ+1)*VERTEX_COUNT + xCoord + 1].y, 1.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + xCoord].y, 1.0f), glm::vec2(xCoord, zCoord));
+	}
+	printf("%f\n", answer);
+	return answer;
+}
+
+float Terrain::barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
+{
+	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+	float l3 = 1.0f - l1 - l2;
+	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }
