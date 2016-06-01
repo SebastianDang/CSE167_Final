@@ -10,20 +10,23 @@
 class Scenery
 {
 private:
+	//Contain the width and height of the scenery.
 	int width;
 	int height;
-
+	//Access terrains from the scenery class.
 	std::vector<Terrain*> terrains;
+	void generateTerrains();
+	void stitchTerrains();
+	int getTerrain(glm::vec3 position);
 
 public:
 	//Constructor methods.
 	Scenery(int width, int height);
 	~Scenery();
 
-	void generateTerrains();
-	void stitchTerrains();
+	float getHeight(glm::vec3 position);
 
-	float getTerrain(glm::vec3 position);
+	void toggleDrawMode();
 
 	void draw(GLuint shaderProgram);
 };

@@ -16,7 +16,7 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
-	this->toWorld[3] = glm::vec4(0.0f, 0.0f, 20.0f, 1.0f);
+	this->toWorld[3] = glm::vec4(500.0f, 0.0f, 500.0f, 1.0f);
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);
@@ -224,11 +224,6 @@ void OBJObject::draw(GLuint shaderProgram)
 	glBindVertexArray(0);
 }
 
-void OBJObject::movement()
-{
-
-}
-
 void OBJObject::W_movement()
 {
 	glm::vec3 current_position = glm::vec3(this->toWorld[3]);
@@ -264,4 +259,10 @@ void OBJObject::D_movement()
 	this->currentDirection = glm::normalize(new_direction);
 	this->toWorld = toWorld * rotate;
 }
+
+void OBJObject::update_height(float height)
+{
+	this->toWorld[3].y = height + 0.8f;
+}
+
 

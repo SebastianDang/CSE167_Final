@@ -14,6 +14,12 @@ private:
 	GLuint terrainTexture_2;
 	GLuint terrainTexture_3;
 	GLuint blendMap;
+	//Variables to keep track of information.
+	std::vector<Container> containers;//[v, vn, (s,t)]
+	std::vector<glm::vec3> vertices;//v
+	std::vector<glm::vec3> normals;//vn
+	std::vector<glm::vec2> texCoords;//(s,t)
+	std::vector<unsigned int> indices;//indices.
 	//Keep track of the max and min height if height map is loaded.
 	float max_height;
 	float min_height;
@@ -31,6 +37,7 @@ private:
 	GLuint loadTerrain(const char* filename, int index);
 	void setupTerrain(const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map);
 	//Misc.
+	float BaryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
 	int draw_mode;
 
 public:
@@ -42,29 +49,22 @@ public:
 	float x;
 	float z;
 	glm::mat4 toWorld;
-	//Variables to keep track of information.
-	std::vector<Container> containers;//[v, vn, (s,t)]
-	std::vector<glm::vec3> vertices;//v
-	std::vector<glm::vec3> normals;//vn
-	std::vector<glm::vec2> texCoords;//(s,t)
-	std::vector<unsigned int> indices;//indices.
 	//Draw and update methods.
 	void toggleDrawMode();
 	void draw(GLuint shaderProgram);
+	void update();
 	//Keep track of surrounding terrains to stitch them together.
 	Terrain * terrain_top;
 	Terrain * terrain_bottom;
 	Terrain * terrain_left;
 	Terrain * terrain_right;
 	//Functions to stitch the edges.
-	void update();
 	void stitch_all();
+	void stitch_left();
+	void stitch_right(); 
 	void stitch_top();
 	void stitch_bottom();
-	void stitch_left();
-	void stitch_right();
 	//Functions to get the height of the terrain.
 	float getHeight(glm::vec3 position);
-	float barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
 };
 #endif

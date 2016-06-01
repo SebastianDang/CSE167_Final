@@ -61,7 +61,7 @@ void Window::initialize_objects()
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(1, 1);
+	scenery = new Scenery(2, 2);
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
@@ -165,7 +165,7 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 
 void Window::idle_callback()
 {
-
+	object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 }
 
 void Window::display_callback(GLFWwindow* window)
@@ -265,6 +265,9 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1_camera->window_updateCamera();
 		}
 		if (key == GLFW_KEY_T) {
+			scenery->toggleDrawMode();
+		}
+		if (key == GLFW_KEY_R) {
 		}
 	}
 }

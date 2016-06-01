@@ -471,7 +471,6 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
 	//Update viewPos.
 	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
-	glUniform1f(glGetUniformLocation(shaderProgram, "reflect_intensity"), 100.0f / 100.0f);
 	glDisable(GL_CULL_FACE);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
@@ -523,57 +522,10 @@ void Terrain::update()
 /* Stitches any attached terrains. */
 void Terrain::stitch_all()
 {
-	stitch_top();
-	stitch_bottom();
 	stitch_left();
 	stitch_right();
-}
-
-/* Stitches the terrain above it. AKA, negative z from this one. */
-void Terrain::stitch_top()
-{
-	//Base case to check if there's a defined top.
-	if (!terrain_top)
-		return;
-	//Perform stitching.
-	for (int i = 0; i < VERTEX_COUNT; i++)
-	{
-		glm::vec3 cur_top = this->vertices[i];
-		glm::vec3 next_bottom = this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i];
-		float midpoint = (cur_top.y + next_bottom.y) / 2.0f;
-
-		this->vertices[i].y = midpoint;
-		this->containers[i].vertex.y = midpoint;
-		this->update();
-
-		this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i].y = midpoint;
-		this->terrain_top->containers[(VERTEX_COUNT)*(VERTEX_COUNT-1) + i].vertex.y = midpoint;
-		this->terrain_top->update();
-	}
-
-}
-
-/* Stitches the terrain above it. AKA, positive z from this one. */
-void Terrain::stitch_bottom()
-{
-	//Base case to check if there's a defined bottom.
-	if (!terrain_bottom)
-		return;
-	//Perform stitching.
-	for (int i = 0; i < VERTEX_COUNT; i++)
-	{
-		glm::vec3 cur_bottom = this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
-		glm::vec3 next_top = this->terrain_bottom->vertices[i];
-		float midpoint = (cur_bottom.y + next_top.y) / 2.0f;
-
-		this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].y = midpoint;
-		this->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].vertex.y = midpoint;
-		this->update();
-
-		this->terrain_bottom->vertices[i].y = midpoint;
-		this->terrain_bottom->containers[i].vertex.y = midpoint;
-		this->terrain_bottom->update();
-	}
+	stitch_top();
+	stitch_bottom();
 }
 
 /* Stitches the terrain to the left of it. */
@@ -608,12 +560,12 @@ void Terrain::stitch_right()
 	//Perform stitching.
 	for (int i = 0; i < VERTEX_COUNT; i++)
 	{
-		glm::vec3 cur_right = this->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)];
+		glm::vec3 cur_right = this->vertices[(VERTEX_COUNT*i) + (VERTEX_COUNT - 1)];
 		glm::vec3 next_left = this->terrain_right->vertices[(VERTEX_COUNT*i)];
 		float midpoint = (cur_right.y + next_left.y) / 2.0f;
 
-		this->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].y = midpoint;
-		this->containers[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
+		this->vertices[(VERTEX_COUNT*i) + (VERTEX_COUNT - 1)].y = midpoint;
+		this->containers[(VERTEX_COUNT*i) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
 		this->update();
 
 		this->terrain_right->vertices[(VERTEX_COUNT*i)].y = midpoint;
@@ -622,41 +574,92 @@ void Terrain::stitch_right()
 	}
 }
 
+/* Stitches the terrain above it. AKA, negative z from this one. */
+void Terrain::stitch_top()
+{
+	//Base case to check if there's a defined top.
+	if (!terrain_top)
+		return;
+	//Perform stitching.
+	for (int i = 0; i < VERTEX_COUNT; i++)
+	{
+		glm::vec3 cur_top = this->vertices[i];
+		glm::vec3 next_bottom = this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
+		float midpoint = (cur_top.y + next_bottom.y) / 2.0f;
+
+		this->vertices[i].y = midpoint;
+		this->containers[i].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].y = midpoint;
+		this->terrain_top->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].vertex.y = midpoint;
+		this->terrain_top->update();
+	}
+}
+
+/* Stitches the terrain above it. AKA, positive z from this one. */
+void Terrain::stitch_bottom()
+{
+	//Base case to check if there's a defined bottom.
+	if (!terrain_bottom)
+		return;
+	//Perform stitching.
+	for (int i = 2; i < VERTEX_COUNT-3; i++)
+	{
+		glm::vec3 cur_bottom = this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
+		glm::vec3 next_top = this->terrain_bottom->vertices[i];
+		float midpoint = (cur_bottom.y + next_top.y) / 2.0f;
+
+		this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].y = midpoint;
+		this->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].vertex.y = midpoint;
+		this->update();
+
+		this->terrain_bottom->vertices[i].y = midpoint;
+		this->terrain_bottom->containers[i].vertex.y = midpoint;
+		this->terrain_bottom->update();
+	}
+}
+
+/* Gets the height of the terrain at a given position. */
 float Terrain::getHeight(glm::vec3 position)
 {
+	//Get the coordinates in terms of the terrain.
 	float terrain_x = position.x - this->x;
 	float terrain_z = position.z - this->z;
-
-	float gridSquareSize = (SIZE) / ((float)this->vertices.size() - 1);
-	int gridX = (int)floor(terrain_x / gridSquareSize);
-	int gridZ = (int)floor(terrain_z / gridSquareSize);
-
-	if (gridX >= ((float)this->vertices.size() - 1) || gridZ >= ((float)this->vertices.size() - 1) || gridX < 0 || gridZ < 0)
-	{
+	//Check for boundaries.
+	if (terrain_x > SIZE || terrain_z > SIZE) {
+		printf("Accessing a point out of bounds of this terrain. Please check to make sure we're accessing the proper terrain.\n");
 		return 0;
 	}
-
-	float xCoord = fmod(terrain_x, gridSquareSize)/gridSquareSize;
-	float zCoord = fmod(terrain_z, gridSquareSize)/gridSquareSize;
-
+	//Get grid coordinate to determine which vertices to interpolate.
+	float gridSize = (float)(SIZE) / (float)(VERTEX_COUNT-1);
+	float gridX = floor(terrain_x / gridSize);
+	float gridZ = floor(terrain_z / gridSize);
+	//Get xCoord and zCoord within the square.
+	float xCoord = fmod(terrain_x, gridSize) / gridSize;
+	float zCoord = fmod(terrain_z, gridSize) / gridSize;
+	//Compute the height between the triangles.
 	float answer;
 	if (xCoord <= (1 - zCoord))
 	{
-		answer = barryCentric(glm::vec3(0.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord].y, 0.0f), glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord + 1].y, 0.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + xCoord + 1].y, 1.0f), glm::vec2(xCoord, zCoord));
+		answer = BaryCentric(glm::vec3(0.0f, this->vertices[gridZ*VERTEX_COUNT + gridX].y, 0.0f), glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + gridX + 1].y, 0.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + gridX + 1].y, 1.0f), glm::vec2(xCoord, zCoord));
 	}
 	else
 	{
-		answer = barryCentric(glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + xCoord + 1].y, 0.0f), glm::vec3(1.0f, this->vertices[(gridZ+1)*VERTEX_COUNT + xCoord + 1].y, 1.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + xCoord].y, 1.0f), glm::vec2(xCoord, zCoord));
+		answer = BaryCentric(glm::vec3(1.0f, this->vertices[gridZ*VERTEX_COUNT + gridX + 1].y, 0.0f), glm::vec3(1.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + gridX + 1].y, 1.0f), glm::vec3(0.0f, this->vertices[(gridZ + 1)*VERTEX_COUNT + gridX].y, 1.0f), glm::vec2(xCoord, zCoord));
 	}
-	printf("%f\n", answer);
+	//Return the result.
 	return answer;
 }
 
-float Terrain::barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
+/* Returns the interpolated height for BaryCentric coordinates. */
+float Terrain::BaryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
 {
 	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+
 	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
 	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
 	float l3 = 1.0f - l1 - l2;
+
 	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }

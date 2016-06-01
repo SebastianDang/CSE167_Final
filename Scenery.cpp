@@ -28,10 +28,10 @@ void Scenery::generateTerrains()
 		for (int j = 0; j < this->width; j++)
 		{
 			std::string string_blend = "../terrain/blend_maps/blend_map_" + std::to_string((width*i) + j + 1) + ".ppm";
-			const char* file_name_blend = string_blend.c_str();
+			const char* file_names_blend = string_blend.c_str();
 			std::string string_height = "../terrain/height_maps/height_map_" + std::to_string((width*i) + j + 1) + ".ppm";
-			const char* file_name_height = string_height.c_str();
-			Terrain * cur_terrain = new Terrain(j, i, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", file_name_blend, file_name_height);
+			const char* file_names_height = string_height.c_str();
+			Terrain * cur_terrain = new Terrain(j, i, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", file_names_blend, file_names_height);
 			terrains.push_back(cur_terrain);
 		}
 	}
@@ -73,8 +73,35 @@ void Scenery::draw(GLuint shaderProgram)
 	}
 }
 
-float Scenery::getTerrain(glm::vec3 position)
+/* Toggles the draw mode for wireframe mode or fill mode. */
+void Scenery::toggleDrawMode()
+{
+	for (int i = 0; i < terrains.size(); i++)
+	{
+		terrains[i]->toggleDrawMode();
+	}
+}
+
+
+/* Return the terrain number that the object is currently in. */
+int Scenery::getTerrain(glm::vec3 position)
 {
 	float position_x = position.x / TERRAIN_SIZE;
 	float position_z = position.z / TERRAIN_SIZE;
+
+	if (position_x >= width || position_x < 0 || position_z >= height || position_z < 0) {
+		return 0;
+	}
+
+	int terrain_x = floor(position_x);
+	int terrain_z = floor(position_z);
+
+	return (terrain_z*width + terrain_x);
+}
+
+/* Return the height for the given terrain (given position in the world). */
+float Scenery::getHeight(glm::vec3 position)
+{
+	Terrain * terrain = terrains[getTerrain(position)];
+	return terrain->getHeight(position);
 }
