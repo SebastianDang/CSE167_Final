@@ -11,7 +11,6 @@ using namespace std;
 Camera::Camera(glm::vec3 e, glm::vec3 d, glm::vec3 up)
 {
 	setupCamera(e, d, up);
-	following_object = false;
 }
 
 /* Setup the camera for 3rd person view. */
@@ -22,7 +21,6 @@ Camera::Camera(OBJObject * object_follow)
 	glm::vec3 camera_position = glm::vec3(object_position.x, object_position.y, object_position.z + 20.0f);
 	glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
 	setupCamera(camera_position, object_position, camera_up);
-	following_object = true;
 }
 
 /* Deconstructor to safely delete when finished. */
@@ -92,7 +90,7 @@ void Camera::camera_rotate_around(glm::vec3 v, glm::vec3 w)
 {
 	//Calculate the translation.
 	glm::vec3 translate_v = glm::vec3(w.x - v.x, v.y - w.y, 0.0f);//Since x- and x+ are from left to right, y must be inverted so that y- and y+ are from bottom to top.
-	translate_v *= (float)(1 / (5*(float)Window::width));//Scale the translation.
+	translate_v *= (float)(1 / (float)Window::width);//Scale the translation.
 	//Get the old position values for x (the distance from the lookat, not the origin).
 	glm::vec3 cur_position_x = this->camera.position - this->camera.lookat;
 	float cur_position_length_x = glm::length(cur_position_x);
@@ -150,7 +148,8 @@ void Camera::camera_zoom(double y)
 void Camera::object_follow()
 {
 	//Do nothing if there is no object.
-	if (!following_object) {
+	if (!toFollow)
+	{
 		return;
 	}
 	//Get the object's position and camera's current lookat position.

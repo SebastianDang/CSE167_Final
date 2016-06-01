@@ -90,6 +90,7 @@ int Scenery::getTerrain(glm::vec3 position)
 	float position_z = position.z / TERRAIN_SIZE;
 
 	if (position_x >= width || position_x < 0 || position_z >= height || position_z < 0) {
+		printf("Accessing a point out of bounds of this Scenery. Please check to make sure we're accessing the proper coordinates.\n");
 		return 0;
 	}
 

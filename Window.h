@@ -45,6 +45,9 @@ public:
 	static void cursor_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 	static void updateCamera(glm::vec3 e, glm::vec3 d, glm::vec3 up);
 	static void redrawScene();
+
+	static float lastFrameTime;
+	static float delta;
 };
 
 #endif

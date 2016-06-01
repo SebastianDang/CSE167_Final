@@ -3,8 +3,8 @@
 
 using namespace std;
 
-#define RUN_SPEED  5.0f
-#define TURN_SPEED  10.0f
+#define RUN_SPEED  500.0f
+#define TURN_SPEED  900.0f
 
 
 /* Initialize the object, parse it and set up buffers. */
@@ -227,14 +227,14 @@ void OBJObject::draw(GLuint shaderProgram)
 void OBJObject::W_movement()
 {
 	glm::vec3 current_position = glm::vec3(this->toWorld[3]);
-	glm::vec3 displacement = this->currentDirection * RUN_SPEED;
+	glm::vec3 displacement = this->currentDirection * (RUN_SPEED * Window::delta);
 	glm::vec3 new_position = current_position + displacement;
 	this->toWorld[3] = glm::vec4(new_position, 1.0f);
 }
 
 void OBJObject::A_movement()
 {
-	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (TURN_SPEED / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), ((TURN_SPEED * Window::delta) / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::vec4 current_direction = glm::vec4(this->currentDirection, 1.0f);
 	current_direction = rotate * current_direction;
 	glm::vec3 new_direction = glm::vec3(current_direction);
@@ -245,14 +245,14 @@ void OBJObject::A_movement()
 void OBJObject::S_movement()
 {
 	glm::vec3 current_position = glm::vec3(this->toWorld[3]);
-	glm::vec3 displacement = this->currentDirection * RUN_SPEED;
+	glm::vec3 displacement = this->currentDirection * (RUN_SPEED * Window::delta);
 	glm::vec3 new_position = current_position - displacement;
 	this->toWorld[3] = glm::vec4(new_position, 1.0f);
 }
 
 void OBJObject::D_movement()
 {
-	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (-TURN_SPEED / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), ((-TURN_SPEED * Window::delta) / 180.0f * glm::pi<float>()), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::vec4 current_direction = glm::vec4(this->currentDirection, 1.0f);
 	current_direction = rotate * current_direction;
 	glm::vec3 new_direction = glm::vec3(current_direction);

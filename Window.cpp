@@ -55,22 +55,24 @@ glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default.
 glm::mat4 Window::P;//Perspective.
 glm::mat4 Window::V;//View.
 
+//Calculate frame time.
+float Window::lastFrameTime;
+float Window::delta;
+
 void Window::initialize_objects()
 {
 	//Initialize world variables.
+	skyBox = new SkyBox();//Initialize the default skybox.
+	scenery = new Scenery(2, 2);//Initialize the scenery for the entire program.
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
-	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(8, 8);
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("../obj/pod.obj", 1);
+	object_1 = new OBJObject("../obj/pod.obj", 5);
 	object_1_camera = new Camera(object_1);
-
-	//Initialize any terrains here.
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
@@ -81,10 +83,8 @@ void Window::initialize_objects()
 	#else
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("../obj/pod.obj", 1);
-
-	//Initialize any terrains here.
-	terrain = new Terrain(0, 0, "./terrain/texture_0.ppm", "./terrain/texture_1.ppm", "./terrain/texture_2.ppm", "./terrain/texture_3.ppm", "./terrain/blend_map.ppm", "./terrain/height_map.ppm", skyBox->getSkyBox());
+	object_1 = new OBJObject("./obj/pod.obj", 1);
+	object_1_camera = new Camera(object_1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("shader.vert", "shader.frag");
@@ -100,12 +100,13 @@ void Window::initialize_objects()
 void Window::clean_up()
 {
 	//Delete any instantiated objects.
+	delete(skyBox);
+	delete(scenery);
 	delete(world_camera);
 	delete(world_light);
-	delete(skyBox);
 	delete(object_1);
 	delete(object_1_camera);
-	delete(scenery);
+
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_skybox);
@@ -146,6 +147,9 @@ GLFWwindow* Window::create_window(int width, int height)
 	//Call the resize callback to make sure things get drawn immediately
 	Window::resize_callback(window, width, height);
 
+	//Set the initial frame time.
+	Window::lastFrameTime = glfwGetTime();
+
 	return window;
 }
 
@@ -165,11 +169,16 @@ void Window::resize_callback(GLFWwindow* window, int width, int height)
 
 void Window::idle_callback()
 {
-	object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
+	//Get the frame time.
+	float currentFrameTime = glfwGetTime();
+	Window::delta = (currentFrameTime - Window::lastFrameTime);
+	Window::lastFrameTime = currentFrameTime;
+	
 }
 
 void Window::display_callback(GLFWwindow* window)
 {
+
 	//Draw the entire scene.
 	Window::redrawScene();
 	//Gets events, including input such as keyboard and mouse or window resizing
@@ -224,24 +233,28 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		if (wKey == GLFW_PRESS)
 		{
 			object_1->W_movement();
+			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (aKey == GLFW_PRESS)
 		{
 			object_1->A_movement();
+			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (sKey == GLFW_PRESS)
 		{
 			object_1->S_movement();
+			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (dKey == GLFW_PRESS)
 		{
 			object_1->D_movement();
+			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
@@ -287,12 +300,12 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 		//On left drag, we perform rotations. Relative to the object.
 		if (Window::mouse_status == LEFT_HOLD)
 		{
-			world_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
-			world_camera->window_updateCamera();
+
 		}
 		//On right drag, we perform translations. Relative to the object.
 		if (Window::mouse_status == RIGHT_HOLD)
 		{
+
 		}
 	}
 	//Controls for camera 1.
