@@ -471,7 +471,7 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
 	//Update viewPos.
 	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
 	{
@@ -535,7 +535,19 @@ void Terrain::stitch_left()
 	if (!terrain_left)
 		return;
 	//Perform stitching.
-	for (int i = 0; i < VERTEX_COUNT; i++)
+	glm::vec3 cur_left = this->vertices[0];
+	glm::vec3 next_right = this->terrain_left->vertices[(VERTEX_COUNT - 1)];
+	float midpoint = next_right.y;
+
+	this->vertices[0].y = midpoint;
+	this->containers[0].vertex.y = midpoint;
+	this->update();
+
+	this->terrain_left->vertices[(VERTEX_COUNT - 1)].y = midpoint;
+	this->terrain_left->containers[(VERTEX_COUNT - 1)].vertex.y = midpoint;
+	this->terrain_left->update();
+
+	for (int i = 1; i < VERTEX_COUNT; i++)
 	{
 		glm::vec3 cur_left = this->vertices[(VERTEX_COUNT*i)];
 		glm::vec3 next_right = this->terrain_left->vertices[(VERTEX_COUNT *i) + (VERTEX_COUNT - 1)];
@@ -558,7 +570,7 @@ void Terrain::stitch_right()
 	if (!terrain_right)
 		return;
 	//Perform stitching.
-	for (int i = 0; i < VERTEX_COUNT; i++)
+	for (int i = 0; i < VERTEX_COUNT-1; i++)
 	{
 		glm::vec3 cur_right = this->vertices[(VERTEX_COUNT*i) + (VERTEX_COUNT - 1)];
 		glm::vec3 next_left = this->terrain_right->vertices[(VERTEX_COUNT*i)];
@@ -572,6 +584,19 @@ void Terrain::stitch_right()
 		this->terrain_right->containers[(VERTEX_COUNT*i)].vertex.y = midpoint;
 		this->terrain_right->update();
 	}
+
+	glm::vec3 cur_right = this->vertices[(VERTEX_COUNT*(VERTEX_COUNT-1)) + (VERTEX_COUNT - 1)];
+	glm::vec3 next_left = this->terrain_right->vertices[(VERTEX_COUNT*(VERTEX_COUNT - 1))];
+	float midpoint = next_left.y;
+
+	this->vertices[(VERTEX_COUNT*(VERTEX_COUNT - 1)) + (VERTEX_COUNT - 1)].y = midpoint;
+	this->containers[(VERTEX_COUNT*(VERTEX_COUNT - 1)) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
+	this->update();
+
+	this->terrain_right->vertices[(VERTEX_COUNT*(VERTEX_COUNT - 1))].y = midpoint;
+	this->terrain_right->containers[(VERTEX_COUNT*(VERTEX_COUNT - 1))].vertex.y = midpoint;
+	this->terrain_right->update();
+
 }
 
 /* Stitches the terrain above it. AKA, negative z from this one. */
@@ -581,7 +606,7 @@ void Terrain::stitch_top()
 	if (!terrain_top)
 		return;
 	//Perform stitching.
-	for (int i = 0; i < VERTEX_COUNT; i++)
+	for (int i = 0; i < VERTEX_COUNT-1; i++)
 	{
 		glm::vec3 cur_top = this->vertices[i];
 		glm::vec3 next_bottom = this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
@@ -595,6 +620,18 @@ void Terrain::stitch_top()
 		this->terrain_top->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i].vertex.y = midpoint;
 		this->terrain_top->update();
 	}
+
+	glm::vec3 cur_top = this->vertices[VERTEX_COUNT - 1];
+	glm::vec3 next_bottom = this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + (VERTEX_COUNT - 1)];
+	float midpoint = next_bottom.y;
+
+	this->vertices[(VERTEX_COUNT - 1)].y = midpoint;
+	this->containers[(VERTEX_COUNT - 1)].vertex.y = midpoint;
+	this->update();
+
+	this->terrain_top->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + (VERTEX_COUNT - 1)].y = midpoint;
+	this->terrain_top->containers[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + (VERTEX_COUNT - 1)].vertex.y = midpoint;
+	this->terrain_top->update();
 }
 
 /* Stitches the terrain above it. AKA, positive z from this one. */
@@ -604,7 +641,7 @@ void Terrain::stitch_bottom()
 	if (!terrain_bottom)
 		return;
 	//Perform stitching.
-	for (int i = 2; i < VERTEX_COUNT-3; i++)
+	for (int i = 1; i < VERTEX_COUNT; i++)
 	{
 		glm::vec3 cur_bottom = this->vertices[(VERTEX_COUNT)*(VERTEX_COUNT - 1) + i];
 		glm::vec3 next_top = this->terrain_bottom->vertices[i];

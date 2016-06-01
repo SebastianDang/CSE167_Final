@@ -61,7 +61,7 @@ void Window::initialize_objects()
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(2, 2);
+	scenery = new Scenery(8, 8);
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
