@@ -13,6 +13,7 @@ private:
 	//Contain the width and height of the scenery.
 	int width;
 	int height;
+	glm::vec2 boundaries;
 	//Access terrains from the scenery class.
 	std::vector<Terrain*> terrains;
 	void generateTerrains();
@@ -25,6 +26,7 @@ public:
 	~Scenery();
 
 	float getHeight(glm::vec3 position);
+	glm::vec2 getBounds();
 
 	void toggleDrawMode();
 

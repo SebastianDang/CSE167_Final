@@ -63,7 +63,7 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(2, 2);//Initialize the scenery for the entire program.
+	scenery = new Scenery(8, 8);//Initialize the scenery for the entire program.
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
 
@@ -232,28 +232,28 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	{
 		if (wKey == GLFW_PRESS)
 		{
-			object_1->W_movement();
+			object_1->W_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (aKey == GLFW_PRESS)
 		{
-			object_1->A_movement();
+			object_1->A_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (sKey == GLFW_PRESS)
 		{
-			object_1->S_movement();
+			object_1->S_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
 		}
 		if (dKey == GLFW_PRESS)
 		{
-			object_1->D_movement();
+			object_1->D_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();

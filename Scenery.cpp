@@ -8,8 +8,11 @@
 /* Constructor to create a terrain map with a specified width and height. */
 Scenery::Scenery(int width, int height)
 {
+	//Setup the width, height, and boundaries of the scene.
 	this->width = width;
 	this->height = height;
+	this->boundaries.x = width * TERRAIN_SIZE;
+	this->boundaries.y = height * TERRAIN_SIZE;
 	generateTerrains();
 	stitchTerrains();
 }
@@ -105,4 +108,10 @@ float Scenery::getHeight(glm::vec3 position)
 {
 	Terrain * terrain = terrains[getTerrain(position)];
 	return terrain->getHeight(position);
+}
+
+glm::vec2 Scenery::getBounds()
+{
+	glm::vec2 toReturn = this->boundaries;
+	return toReturn;
 }

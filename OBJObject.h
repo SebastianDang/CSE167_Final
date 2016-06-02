@@ -45,10 +45,10 @@ public:
 	void draw(GLuint shaderProgram);
 
 	//Object movement.
-	void W_movement();
-	void A_movement();
-	void S_movement();
-	void D_movement();
+	void W_movement(glm::vec2 boundaries);
+	void A_movement(glm::vec2 boundaries);
+	void S_movement(glm::vec2 boundaries);
+	void D_movement(glm::vec2 boundaries);
 	void update_height(float height);
 };
 
