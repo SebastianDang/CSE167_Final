@@ -75,6 +75,9 @@
     <ClInclude Include="..\Scenery.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Water.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp">
@@ -134,6 +137,9 @@
     <ClCompile Include="..\Scenery.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Water.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -165,6 +171,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\terrain.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\water.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\water.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

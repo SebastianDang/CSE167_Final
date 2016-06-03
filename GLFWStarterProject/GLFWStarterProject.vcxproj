@@ -38,6 +38,7 @@
     <ClInclude Include="..\shader.h" />
     <ClInclude Include="..\Terrain.h" />
     <ClInclude Include="..\Track.h" />
+    <ClInclude Include="..\Water.h" />
     <ClInclude Include="..\Window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +60,7 @@
     <ClCompile Include="..\shader.cpp" />
     <ClCompile Include="..\Terrain.cpp" />
     <ClCompile Include="..\Track.cpp" />
+    <ClCompile Include="..\Water.cpp" />
     <ClCompile Include="..\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +74,8 @@
     <None Include="..\skybox.vert" />
     <None Include="..\terrain.frag" />
     <None Include="..\terrain.vert" />
+    <None Include="..\water.frag" />
+    <None Include="..\water.vert" />
     <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

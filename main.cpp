@@ -37,6 +37,14 @@ void setup_glew()
 
 void setup_opengl_settings()
 {
+	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
+	#ifdef _WIN32
+
+	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
+	#else
+		glewExperimental = GL_TRUE;
+	#endif
+
 	// Setup GLEW
 	setup_glew();
 	// Enable multisampling

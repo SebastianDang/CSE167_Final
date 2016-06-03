@@ -16,7 +16,7 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
-	this->toWorld[3] = glm::vec4(500.0f, 1.0f, 500.0f, 1.0f);
+	this->toWorld[3] = glm::vec4(0.0, 1.0f, 0.0, 1.0f);
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);
@@ -76,10 +76,13 @@ void OBJObject::parse(const char *filepath)
 		if (strcmp(buf, "f") == 0) {//Note: Read only left or right side since they are identical on both sides.
 			unsigned int faces_v[3], faces_vn[3];
 			fscanf(objFile, "%d//%d %d//%d %d//%d\n", &faces_v[0], &faces_vn[0], &faces_v[1], &faces_vn[1], &faces_v[2], &faces_vn[2]);
+			//unsigned int faces_v[3], faces_vn[3], faces_vt[3];
+			//fscanf(objFile, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &faces_v[0], &faces_vt[0], &faces_vn[0], &faces_v[1], &faces_vt[1], &faces_vn[1], &faces_v[2], &faces_vt[2], &faces_vn[2]);
 			indices.push_back(faces_v[0] - 1);
 			indices.push_back(faces_v[1] - 1);
 			indices.push_back(faces_v[2] - 1);
 			continue;
+
 		}
 	}
 	fclose(objFile);

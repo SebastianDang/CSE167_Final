@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "Scenery.h"
+#include "Water.h"
 
 using namespace std;
 
@@ -35,11 +36,13 @@ OBJObject * object_1;
 SkyBox * skyBox;
 Scenery * scenery;
 Light * world_light;
+Water * water;
 
 //Define any shaders here.
 GLint shaderProgram;
 GLint shaderProgram_skybox;
 GLint shaderProgram_terrain;
+GLint shaderProgram_water;
 
 //Window properties
 int Window::width;//Width of the window.
@@ -49,8 +52,8 @@ double Window::y;//Current mouse y coordinate.
 int Window::mouse_status = IDLE;//Define the mouse status for any clicks.
 glm::vec3 Window::lastPoint;//Last point clicked.
 int Window::camera_mode = CAMERA_WORLD;//Defined camera for controls.
-glm::vec3 Window::camera_pos = glm::vec3(500.0f, 50.0f, 500.0f);//Default.
-glm::vec3 Window::camera_look_at = glm::vec3(500.0f, 0.0f, 500.0f);//Default.
+glm::vec3 Window::camera_pos = glm::vec3(0.0f, 0.0f, 20.0f);//Default.
+glm::vec3 Window::camera_look_at = glm::vec3(0.0f, 0.0f, 0.0f);//Default.
 glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default. 
 glm::mat4 Window::P;//Perspective.
 glm::mat4 Window::V;//View.
@@ -63,9 +66,10 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(8, 8);//Initialize the scenery for the entire program.
+	scenery = new Scenery(1, 1);//Initialize the scenery for the entire program.
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
+	water = new Water();
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
@@ -78,6 +82,7 @@ void Window::initialize_objects()
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
 	shaderProgram_skybox = LoadShaders("../skybox.vert", "../skybox.frag");
 	shaderProgram_terrain = LoadShaders("../terrain.vert", "../terrain.frag");
+	shaderProgram_water = LoadShaders("../water.vert", "../water.frag");
 	
 	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
 	#else
@@ -85,11 +90,12 @@ void Window::initialize_objects()
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("./obj/pod.obj", 1);
 	object_1_camera = new Camera(object_1);
-	0.5, 0.5, 0.5
+
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("shader.vert", "shader.frag");
 	shaderProgram_skybox = LoadShaders("skybox.vert", "skybox.frag");
 	shaderProgram_terrain = LoadShaders("terrain.vert", "terrain.frag");
+	shaderProgram_water = LoadShaders("water.vert", "water.frag");
 
 	#endif
 
@@ -123,6 +129,17 @@ GLFWwindow* Window::create_window(int width, int height)
 
 	//4x antialiasing
 	glfwWindowHint(GLFW_SAMPLES, 4);
+
+	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
+	#ifdef _WIN32
+
+	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
+	#else
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#endif
 
 	//Create the GLFW window
 	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
@@ -201,6 +218,11 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
 	scenery->draw(shaderProgram_terrain);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_water);
+	//Render the terrain
+	water->draw(shaderProgram_water);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_skybox);
