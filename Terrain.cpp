@@ -11,6 +11,7 @@ using namespace std;
 #define MAX_DISPLACEMENT 0.01f
 #define DRAW_SHADED 0
 #define DRAW_WIREFRAME 1
+#define SCENE_MODE 0
 
 /* Flat Terrain. Ability to input a height map: either real or generated from different applications. Shader that adds at least 3 different type of terrain(grass, desert, snow). */
 Terrain::Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map)
@@ -528,6 +529,8 @@ void Terrain::draw(GLuint shaderProgram)
 
 	//Set it back to fill.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glEnable(GL_FOG);
 }
 
 /* Update the shader with new updated vertices. */

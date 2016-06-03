@@ -18,6 +18,7 @@ uniform vec3 lightPos;
 out vec3 FragPos;
 out vec3 FragNormal;
 out vec2 FragTexCoords;
+out float visibility;
 
 void main()
 {

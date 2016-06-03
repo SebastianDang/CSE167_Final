@@ -117,9 +117,16 @@ void Camera::camera_rotate_around(glm::vec3 v, glm::vec3 w)
 	if (angle >= glm::radians(MAX_CAMERA_PITCH))
 	{
 		this->camera.position = new_position_y;
-		if (this->camera.position.y <= 0.0f)
+		float threshold = 0.0f;
+		//If attached to an object, we can't go below the object.
+		if (toFollow != nullptr)
 		{
-			this->camera.position.y = 0.0f;
+			threshold = toFollow->toWorld[3].y;
+		}
+		//Can't go below the threshold.
+		if (this->camera.position.y <= threshold)
+		{
+			this->camera.position.y = threshold;
 		}
 	}
 	//Update camera vectors.

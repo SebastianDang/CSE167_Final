@@ -24,4 +24,5 @@ void main()
 	FragPos = vec3(model * vec4(vertex.x, vertex.y, vertex.z, 1.0f));
 	FragNormal = vec3( mat4(transpose(inverse(model)))  * vec4(normal.x, normal.y, normal.z, 1.0f));  
 	FragTexCoords = texCoords;
+
 }

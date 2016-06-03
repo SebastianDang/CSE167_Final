@@ -4,6 +4,7 @@
 #include <sstream> 
 
 #define TERRAIN_SIZE 500.0f
+#define SCENE_MODE 1
 
 /* Constructor to create a terrain map with a specified width and height. */
 Scenery::Scenery(int width, int height)
@@ -13,8 +14,15 @@ Scenery::Scenery(int width, int height)
 	this->height = height;
 	this->boundaries.x = width * TERRAIN_SIZE;
 	this->boundaries.y = height * TERRAIN_SIZE;
-	generateTerrains();
-	stitchTerrains();
+	if (SCENE_MODE == 0)
+	{
+		Terrain * cur_terrain = new Terrain(0.0f, 0.0f, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", "../terrain/blend_maps/blend_map_master.ppm", "../terrain/height_maps/height_map_master.ppm");
+		terrains.push_back(cur_terrain);
+	}
+	else if (SCENE_MODE == 1) {
+		generateTerrains();
+		stitchTerrains();
+	}
 }
 
 /* Deconstructor to safely delete when finished. */
@@ -85,7 +93,6 @@ void Scenery::toggleDrawMode()
 	}
 }
 
-
 /* Return the terrain number that the object is currently in. */
 int Scenery::getTerrain(glm::vec3 position)
 {
@@ -106,10 +113,19 @@ int Scenery::getTerrain(glm::vec3 position)
 /* Return the height for the given terrain (given position in the world). */
 float Scenery::getHeight(glm::vec3 position)
 {
-	Terrain * terrain = terrains[getTerrain(position)];
-	return terrain->getHeight(position);
+	if (SCENE_MODE == 0)
+	{
+		Terrain * terrain = terrains[0];
+		return terrain->getHeight(position);
+	}
+	else if (SCENE_MODE == 1)
+	{
+		Terrain * terrain = terrains[getTerrain(position)];
+		return terrain->getHeight(position);
+	}
 }
 
+/* Return the boundaries of the scenery. */
 glm::vec2 Scenery::getBounds()
 {
 	glm::vec2 toReturn = this->boundaries;

@@ -49,8 +49,8 @@ double Window::y;//Current mouse y coordinate.
 int Window::mouse_status = IDLE;//Define the mouse status for any clicks.
 glm::vec3 Window::lastPoint;//Last point clicked.
 int Window::camera_mode = CAMERA_WORLD;//Defined camera for controls.
-glm::vec3 Window::camera_pos = glm::vec3(0.0f, 0.0f, 20.0f);//Default.
-glm::vec3 Window::camera_look_at = glm::vec3(0.0f, 0.0f, 0.0f);//Default.
+glm::vec3 Window::camera_pos = glm::vec3(500.0f, 50.0f, 500.0f);//Default.
+glm::vec3 Window::camera_look_at = glm::vec3(500.0f, 0.0f, 500.0f);//Default.
 glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default. 
 glm::mat4 Window::P;//Perspective.
 glm::mat4 Window::V;//View.
@@ -71,7 +71,7 @@ void Window::initialize_objects()
 	#ifdef _WIN32 
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("../obj/pod.obj", 5);
+	object_1 = new OBJObject("../obj/songoku.obj", 5);
 	object_1_camera = new Camera(object_1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
@@ -85,7 +85,7 @@ void Window::initialize_objects()
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("./obj/pod.obj", 1);
 	object_1_camera = new Camera(object_1);
-
+	0.5, 0.5, 0.5
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("shader.vert", "shader.frag");
 	shaderProgram_skybox = LoadShaders("skybox.vert", "skybox.frag");
@@ -94,7 +94,6 @@ void Window::initialize_objects()
 	#endif
 
 	world_light->updateLighting(shaderProgram);
-	world_light->updateLighting(shaderProgram_terrain);
 }
 
 void Window::clean_up()
@@ -190,7 +189,7 @@ void Window::display_callback(GLFWwindow* window)
 void Window::redrawScene()
 {
 	//Clear the color and depth buffers
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f , 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Use the shader of programID

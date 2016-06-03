@@ -40,8 +40,8 @@ void main()
 	total_color += TerrainTexture_0_color + TerrainTexture_1_color + TerrainTexture_2_color + TerrainTexture_3_color;
 
 	//Fake lighting
-	vec3 light_color = vec3(1, 0.929, 0.929);
-	vec3 toLightVector = vec3(0.1, 1.0, 0.2);
+	vec3 light_color = vec3(1.0, 0.929, 0.929);
+	vec3 toLightVector = vec3(1.0, 1.0, -0.2);
 	vec3 unitNormal = normalize(FragNormal);
 	vec3 unitLightVector = normalize(toLightVector);
 
