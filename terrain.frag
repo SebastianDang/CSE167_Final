@@ -1,36 +1,5 @@
 #version 330 core
 
-//Setup the different light sources.
-uniform struct DirLight {//Directional Light
-	bool on;
-    vec3 direction;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-} dirLight;
-
-uniform struct PointLight {//Point Light
-	bool on;
-    vec3 position;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    float quadratic;
-} pointLight;
-
-uniform struct SpotLight {//Spot Light
-	bool on;
-    vec3 position;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-	float quadratic;
-
-	vec3 direction;
-	float spotCutoff;
-	float spotExponent;
-} spotLight;
-
 uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform samplerCube skybox;
@@ -70,9 +39,31 @@ void main()
 	 
 	total_color += TerrainTexture_0_color + TerrainTexture_1_color + TerrainTexture_2_color + TerrainTexture_3_color;
 
+	//Fake lighting
+	vec3 light_color = vec3(1, 0.929, 0.929);
+	vec3 toLightVector = vec3(0.1, 1.0, 0.2);
+	vec3 unitNormal = normalize(FragNormal);
+	vec3 unitLightVector = normalize(toLightVector);
+
+	float nDotl = dot(unitNormal, unitLightVector);
+	float brightness = max(nDotl, 0.1);
+	vec3 diffuse = brightness * light_color;
+
+	vec3 unitVectorToCamera = normalize(FragPos - viewPos);
+	vec3 lightDirection = -unitLightVector;
+	vec3 reflectedLightDirection = reflect(lightDirection,unitNormal);
+	
+	float specularFactor = dot(reflectedLightDirection , unitVectorToCamera);
+	specularFactor = max(specularFactor, 0.0);
+	float dampedFactor = pow(specularFactor,0.5);
+	float reflectivity = 0.05;
+	vec3 finalSpecular = dampedFactor * reflectivity * light_color;
+
+	total_color = vec4(diffuse, 1.0) * total_color + vec4(finalSpecular, 1.0);
+
 	//Reflection
-	vec3 I = normalize(FragPos - viewPos);
-	vec3 R = reflect(I, normalize(FragNormal));
+	//vec3 I = normalize(FragPos - viewPos);
+	//vec3 R = reflect(I, normalize(FragNormal));
 	//vec4 reflect_color = texture(skybox, R) * reflect_intensity;
 	
 	//total_color += reflect_color;

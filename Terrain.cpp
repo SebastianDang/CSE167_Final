@@ -171,6 +171,7 @@ void Terrain::setupHeightMap(const char* filename, float n_smooth, float n_range
 	}
 	//Perform smoothing.
 	diamond_square(0, VERTEX_COUNT-1, 0, VERTEX_COUNT-1, (int)glm::pow(2, n_smooth), (float)n_range);
+	//Update normals and calculate max/min height.
 	updateNormals();
 	updateMaxMinHeight();
 }
@@ -186,6 +187,16 @@ float Terrain::getHeightFromMap(int x, int y, unsigned char * image, int width, 
 	float value = (float)image[index]+(float)image[index + 1]+(float)image[index + 2];
 	float result = (float)fmod(value, (float)MAX_HEIGHT);
 	return result;
+}
+
+/* Return the height at a given x, y coordinate. */
+float Terrain::getHeightFromVertex(int x, int y)
+{
+	if (x < 0 || (x) >= VERTEX_COUNT || y < 0 || y >= VERTEX_COUNT)
+	{
+		return 0;
+	}
+	return this->vertices[(y*VERTEX_COUNT) + x].y;
 }
 
 /* Perform the diamond square algorithm at most 2^n steps. Pass in input level: 2^n, and small number for the range. */
@@ -262,27 +273,35 @@ void Terrain::diamond_square(int x1, int x2, int y1, int y2, int level, float ra
 /* Updates the normals for the entire terrain. */
 void Terrain::updateNormals()
 {
-	for (int gz = 0; gz < VERTEX_COUNT - 1; gz++)
+	for (int i = 0; i < VERTEX_COUNT; i++)
 	{
-		for (int gx = 0; gx < VERTEX_COUNT - 1; gx++)
+		for (int j = 0; j < VERTEX_COUNT; j++)
 		{
-			int topLeft = (gz*VERTEX_COUNT) + gx;
-			int topRight = topLeft + 1;
-			int bottomLeft = ((gz + 1)*VERTEX_COUNT) + gx;
-			int bottomRight = bottomLeft + 1;
-			//Set the new normal values.
-			glm::vec3 normal_TL = glm::cross(this->vertices[topLeft], this->vertices[bottomLeft]);
-			this->normals[topLeft] = normal_TL;
-			this->containers[topLeft].normal = normal_TL;
-			glm::vec3 normal_BL = glm::cross(this->vertices[bottomLeft], this->vertices[topRight]);
-			this->normals[bottomLeft] = normal_BL;
-			this->containers[bottomLeft].normal = normal_BL;
-			glm::vec3 normal_TR = glm::cross(this->vertices[topRight], this->vertices[bottomLeft]);
-			this->normals[topRight] = normal_TR;
-			this->containers[topRight].normal = normal_TR;
-			glm::vec3 normal_BR = glm::cross(this->vertices[bottomLeft], this->vertices[bottomRight]);
-			this->normals[bottomRight] = normal_BR;
-			this->containers[bottomRight].normal = normal_BR;
+			//Get the proper heights.
+			float heightL = getHeightFromVertex(j - 1, i);
+			float heightR = getHeightFromVertex(j + 1, i);
+			float heightD = getHeightFromVertex(j, i + 1);
+			float heightU = getHeightFromVertex(j, i - 1);
+			//Check if we're at the left edge.
+			if (j == 0 && (terrain_left != nullptr)) {
+				heightL = terrain_left->getHeightFromVertex((VERTEX_COUNT - 1), i);
+			}
+			//Check if we're at the right edge.
+			if (j == (VERTEX_COUNT - 1) && (terrain_right != nullptr)) {
+				heightR = terrain_right->getHeightFromVertex(0, i);
+			}
+			//Check if we're at the top edge.
+			if (i == 0  && (terrain_top != nullptr)) {
+				heightU = terrain_top->getHeightFromVertex(j, VERTEX_COUNT-1);
+			}
+			//Check if we're at the bottom edge.
+			if (i == (VERTEX_COUNT - 1) && (terrain_bottom != nullptr)) {
+				heightD = terrain_bottom->getHeightFromVertex(j, 0);
+			}
+			//Update the normal.
+			glm::vec3 normal = glm::normalize(glm::vec3(heightL - heightR, 2.0f, heightU - heightD));
+			this->normals[(i*VERTEX_COUNT) + j] = normal;
+			this->containers[(i*VERTEX_COUNT) + j].normal = normal;
 		}
 	}
 }
@@ -526,6 +545,9 @@ void Terrain::stitch_all()
 	stitch_right();
 	stitch_top();
 	stitch_bottom();
+	//Update normals
+	updateNormals();
+	update();
 }
 
 /* Stitches the terrain to the left of it. */
@@ -657,6 +679,18 @@ void Terrain::stitch_bottom()
 	}
 }
 
+/* Returns the interpolated height for BaryCentric coordinates. */
+float Terrain::BaryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
+{
+	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+
+	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+	float l3 = 1.0f - l1 - l2;
+
+	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+}
+
 /* Gets the height of the terrain at a given position. */
 float Terrain::getHeight(glm::vec3 position)
 {
@@ -687,16 +721,4 @@ float Terrain::getHeight(glm::vec3 position)
 	}
 	//Return the result.
 	return answer;
-}
-
-/* Returns the interpolated height for BaryCentric coordinates. */
-float Terrain::BaryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos)
-{
-	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
-
-	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
-	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
-	float l3 = 1.0f - l1 - l2;
-
-	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }

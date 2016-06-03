@@ -16,7 +16,7 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
-	this->toWorld[3] = glm::vec4(500.0f, 0.0f, 500.0f, 1.0f);
+	this->toWorld[3] = glm::vec4(500.0f, 1.0f, 500.0f, 1.0f);
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);

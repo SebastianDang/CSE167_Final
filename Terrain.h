@@ -29,6 +29,7 @@ private:
 	//Functions for procedural terrain modeling.
 	void setupHeightMap(const char* filename, float n_smooth, float n_range);
 	float getHeightFromMap(int x, int y, unsigned char * image, int width, int height);
+	float getHeightFromVertex(int x, int y);
 	void diamond_square(int x1, int x2, int y1, int y2, int level, float range);
 	void updateNormals();
 	void updateMaxMinHeight();
