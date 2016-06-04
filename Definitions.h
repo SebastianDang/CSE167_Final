@@ -63,4 +63,13 @@ struct Global_Camera {//Global Camera.
 	glm::vec3 right;
 };
 
+struct Particles_struct {
+	glm::vec3 Position, Velocity;
+	glm::vec4 Color;
+	GLfloat Life;
+
+	Particles_struct(): Position(0.0f), Velocity(glm::vec3(0.0f, 30.0f, 0.0f)), Color(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)), Life(1.0f){}
+};
+
+
 #endif

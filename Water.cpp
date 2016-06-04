@@ -10,10 +10,10 @@
 #include "Water.h"
 #include "Window.h"
 
-#define SIZE 200
-#define HEIGHT 4
+#define SIZE 125
+#define HEIGHT 0
 
-/// 4x4 grid of points that will define the surface
+//4x4 grid of points that will define the surface
 Point Points[4][4] = {
     {
         { 2*SIZE, HEIGHT, (2 * SIZE) },
@@ -30,35 +30,29 @@ Point Points[4][4] = {
     {
         { (2 * SIZE), HEIGHT, -SIZE },
         {  SIZE , HEIGHT, -SIZE },
-        { -SIZE, HEIGHT ,-SIZE },
+        { -SIZE, HEIGHT,-SIZE },
         {-(2 * SIZE), HEIGHT, -SIZE }
     },
     {
-        { (2*SIZE),HEIGHT,-(2*SIZE) },
-        {  SIZE,HEIGHT,-(2*SIZE) },
-        { -SIZE,HEIGHT,-(2*SIZE) },
+        { (2*SIZE),HEIGHT, -(2*SIZE) },
+        {  SIZE,HEIGHT , -(2*SIZE) },
+        { -SIZE,HEIGHT , -(2*SIZE) },
         {-(2*SIZE),HEIGHT,-(2*SIZE) }
     }
 };
 
-
-
-
-
-unsigned int LOD=250;
+unsigned int LOD = 20;
 std::vector<glm::vec3> verticiesList;
 std::vector<glm::vec3> normalsList;
 std::vector<int> indiciesList;
 
-
 Water::Water()
 {
-
     this->wireframe = 0;
     
     this->toWorld = glm::mat4(1.0f);
-	//glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(2000, 0.0, 2000));
-	//this->toWorld = translate * toWorld;
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(10, 0.0, 10));
+	this->toWorld = translate * toWorld;
     
     /* Setting up verticies */
     // use the parametric time value 0 to 1
@@ -124,8 +118,8 @@ Water::Water()
                 normalsList[topRight] = normal_TR;
                 glm::vec3 normal_BR = glm::cross(verticiesList[bottomLeft], verticiesList[bottomRight]);
                 normalsList[bottomRight] = normal_BR;
+				
 				*/
-
 				
 				float heightL = getHeightFromVertex(j - 1, i);
 				float heightR = getHeightFromVertex(j + 1, i);
@@ -288,7 +282,6 @@ Point Water::Calculate(float u,float v) {
 
 void Water::draw(GLuint shaderProgram)
 {
-    //glDisable(GL_CULL_FACE);
 
     //Start wireframe mode
     if(wireframe == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -311,29 +304,18 @@ void Water::draw(GLuint shaderProgram)
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &toWorld[0][0]);
     
     glm::vec3 currCamera = Window::camera_pos;
-    //std::cout << "Camera: " << currCamera.x << ", " << currCamera.y << ", " << currCamera.z << std::endl;
     glUniform3f(glGetUniformLocation(shaderProgram, "viewCam"), currCamera.x, currCamera.y, currCamera.z);
     GLint loc = glGetUniformLocation(shaderProgram, "randVal");
-   // srand( time(NULL) ); //Randomize seed initialization
 
     
     int myRandom = rand() % 10001;
     double number = myRandom * 0.000001;
     
-    //Ripple Effect (using distortion of reflection and refraction ---
-    //glUniform1f(loc, number);
-    
     loc = glGetUniformLocation(shaderProgram, "time");
     glUniform1f(loc, time);
 
-
-
-    
     glBindVertexArray(VAO);
-    //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-   // glActiveTexture(GL_TEXTURE0);
-  //  glPointSize(5.0);
-    //glDrawArrays(GL_LINES, 0, 100);
+
     glDrawElements(GL_TRIANGLES, indiciesList.size(), GL_UNSIGNED_INT, 0);
     
     glBindVertexArray(0);
@@ -342,75 +324,6 @@ void Water::draw(GLuint shaderProgram)
     //End wireframe mode
     if(wireframe == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
-
-unsigned char* loadPPMfile(const char* filename, int& width, int& height)
-{
-    const int BUFSIZE = 128;
-    FILE* fp;
-    unsigned int read;
-    unsigned char* rawData;
-    char buf[3][BUFSIZE];
-    char* retval_fgets;
-    size_t retval_sscanf;
-    //Read in the ppm file.
-    if ((fp = fopen(filename, "rb")) == NULL)
-    {
-        std::cerr << "error reading ppm file, could not locate " << filename << std::endl;
-        width = 0;
-        height = 0;
-        return NULL;
-    }
-    //Read magic number:
-    retval_fgets = fgets(buf[0], BUFSIZE, fp);
-    //Read width and height:
-    do
-    {
-        retval_fgets = fgets(buf[0], BUFSIZE, fp);
-    } while (buf[0][0] == '#');
-    retval_sscanf = sscanf(buf[0], "%s %s", buf[1], buf[2]);
-    width = atoi(buf[1]);
-    height = atoi(buf[2]);
-    //Read maxval:
-    do
-    {
-        retval_fgets = fgets(buf[0], BUFSIZE, fp);
-    } while (buf[0][0] == '#');
-    //Read image data:
-    rawData = new unsigned char[width * height * 3];
-    read = (unsigned int)fread(rawData, width * height * 3, 1, fp);
-    fclose(fp);
-    if (read != 1)
-    {
-        std::cerr << "error parsing ppm file, incomplete data" << std::endl;
-        delete[] rawData;
-        width = 0;
-        height = 0;
-        return NULL;
-    }
-    return rawData;//Return rawData or 0 if failed.
-}
-
-GLuint Water::setupDuDvMap()
-{
-    GLuint textureID;
-    
-    int width, height;
-    unsigned char * image;
-    
-    //Creating ID for texture
-    glGenTextures(1, &textureID);
-    glActiveTexture(GL_TEXTURE0); //?
-    
-    glBindTexture(GL_TEXTURE, textureID);
-    
-    image = loadPPMfile("waterdudv.ppm", width, height);
-    glTexImage2D(GL_TEXTURE, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    
-    glBindTexture(GL_TEXTURE, 0);
-    
-    return textureID;
-}
-
 
 /* Return the height at a given x, y coordinate. */
 float Water::getHeightFromVertex(int x, int y)

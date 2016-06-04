@@ -78,6 +78,9 @@
     <ClInclude Include="..\Water.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Particle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp">
@@ -140,6 +143,9 @@
     <ClCompile Include="..\Water.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Particle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -177,6 +183,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\water.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\particle.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\particle.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

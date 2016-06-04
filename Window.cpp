@@ -9,6 +9,7 @@
 #include "Light.h"
 #include "Scenery.h"
 #include "Water.h"
+#include "Particle.h"
 
 using namespace std;
 
@@ -37,12 +38,14 @@ SkyBox * skyBox;
 Scenery * scenery;
 Light * world_light;
 Water * water;
+Particle * particle;
 
 //Define any shaders here.
 GLint shaderProgram;
 GLint shaderProgram_skybox;
 GLint shaderProgram_terrain;
 GLint shaderProgram_water;
+GLint shaderProgram_particle;
 
 //Window properties
 int Window::width;//Width of the window.
@@ -77,12 +80,14 @@ void Window::initialize_objects()
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("../obj/songoku.obj", 5);
 	object_1_camera = new Camera(object_1);
+	particle = new Particle(object_1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
 	shaderProgram_skybox = LoadShaders("../skybox.vert", "../skybox.frag");
 	shaderProgram_terrain = LoadShaders("../terrain.vert", "../terrain.frag");
 	shaderProgram_water = LoadShaders("../water.vert", "../water.frag");
+	shaderProgram_particle = LoadShaders("../particle.vert", "../particle.frag");
 	
 	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
 	#else
@@ -111,11 +116,15 @@ void Window::clean_up()
 	delete(world_light);
 	delete(object_1);
 	delete(object_1_camera);
+	delete(water);
+	delete(particle);
 
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(shaderProgram_skybox);
 	glDeleteProgram(shaderProgram_terrain);
+	glDeleteProgram(shaderProgram_water);
+	glDeleteProgram(shaderProgram_particle);
 }
 
 GLFWwindow* Window::create_window(int width, int height)
@@ -190,11 +199,12 @@ void Window::idle_callback()
 	Window::delta = (currentFrameTime - Window::lastFrameTime);
 	Window::lastFrameTime = currentFrameTime;
 	
+	particle->update();
+	
 }
 
 void Window::display_callback(GLFWwindow* window)
 {
-
 	//Draw the entire scene.
 	Window::redrawScene();
 	//Gets events, including input such as keyboard and mouse or window resizing
@@ -213,6 +223,9 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+
+	glUseProgram(shaderProgram_particle);
+	particle->draw(shaderProgram_particle);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);

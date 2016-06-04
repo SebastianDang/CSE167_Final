@@ -30,6 +30,7 @@
     <ClInclude Include="..\Light.h" />
     <ClInclude Include="..\MatrixTransform.h" />
     <ClInclude Include="..\Node.h" />
+    <ClInclude Include="..\Particle.h" />
     <ClInclude Include="..\Pod.h" />
     <ClInclude Include="..\Scenery.h" />
     <ClInclude Include="..\SkyBox.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="..\Light.cpp" />
     <ClCompile Include="..\MatrixTransform.cpp" />
     <ClCompile Include="..\Node.cpp" />
+    <ClCompile Include="..\Particle.cpp" />
     <ClCompile Include="..\Pod.cpp" />
     <ClCompile Include="..\Scenery.cpp" />
     <ClCompile Include="..\SkyBox.cpp" />
@@ -66,6 +68,8 @@
   <ItemGroup>
     <None Include="..\bezier.frag" />
     <None Include="..\bezier.vert" />
+    <None Include="..\particle.frag" />
+    <None Include="..\particle.vert" />
     <None Include="..\selection.frag" />
     <None Include="..\selection.vert" />
     <None Include="..\shader.frag" />
