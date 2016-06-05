@@ -9,19 +9,23 @@
 class Particle
 {
 private:
+
+	std::vector<Particles_struct> particles;
 	std::vector<glm::vec3> vertices;//v
 	std::vector<unsigned int> indices;//f
 
 	GLuint VAO, VBO, EBO;
 
 	glm::mat4 toWorld;
-
+	float gravity;
 	OBJObject * toFollow;
 
-	void setupShapes();
+	void setupGeometry();
 	void setupParticle();
 
-	std::vector<Particles_struct> particles;
+	GLuint FirstUnusedParticle();
+	void RespawnParticle(Particles_struct &particle);
+	void animate(Particles_struct &particle);
 public:
 	/* Object constructor and setups */
 	Particle();
@@ -31,9 +35,8 @@ public:
 	void update();
 	void draw(GLuint shaderProgram);
 
-	GLuint FirstUnusedParticle();
-	void RespawnParticle(Particles_struct &particle);
-
+	void increaseGravity();
+	void decreaseGravity();
 };
 
 #endif

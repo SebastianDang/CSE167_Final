@@ -2,9 +2,7 @@
 #include "Definitions.h"
 #include <time.h>
 
-#define GRAVITY -40
-#define SIZE 0.1f
-
+#define SIZE 0.05f
 
 GLuint nr_particles = 1000;
 GLuint lastUsedParticle = 0;
@@ -14,9 +12,10 @@ Particle::Particle()
 {
 	//Setup particle properties.
 	this->toWorld = glm::mat4(1.0f);
+	this->gravity = -40;
 
 	//Setup the geometry of the particle and generate the VAO.
-	setupShapes();
+	setupGeometry();
 	setupParticle();
 
 	//Setup the particles generator.
@@ -35,7 +34,7 @@ Particle::Particle(OBJObject * follow)
 	this->toFollow = follow;
 
 	//Setup the geometry of the particle and generate the VAO.
-	setupShapes();
+	setupGeometry();
 	setupParticle();
 
 	//Setup the particles generator.
@@ -52,7 +51,7 @@ Particle::~Particle()
 }
 
 /* Setup the shape of the particle. */
-void Particle::setupShapes()
+void Particle::setupGeometry()
 {
 	GLfloat vertices_array[] = {
 		// Front vertices
@@ -67,7 +66,7 @@ void Particle::setupShapes()
 		-SIZE,  SIZE, -SIZE
 	};
 	GLuint indices_array[] = {  // Note that we start from 0!
-								//Front face
+		//Front face
 		0, 1, 2,
 		2, 3, 0,
 		//Top face
@@ -97,7 +96,7 @@ void Particle::setupShapes()
 	this->vertices.push_back(glm::vec3(SIZE, SIZE, -SIZE));
 	this->vertices.push_back(glm::vec3(-SIZE, SIZE, -SIZE));
 	//Faces.
-	for (int i = 35; i >= 0; i--)
+	for (int i = 17; i >= 12; i--)//35
 	{
 		this->indices.push_back(indices_array[i]);
 	}
@@ -134,11 +133,11 @@ void Particle::setupParticle()
 	glBindVertexArray(0); //Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO.
 }
 
-/* Returns if the particle is alive. */
+/* Returns if the particle is alive and performs 'animation' on those that are alive. */
 void Particle::update()
 {
 	GLuint nr_new_particles = 1;
-	float dt = 0.0005;
+	float dt = 0.001;
 	//Add new particles when dead to constantly generate more particles.
 	for (GLuint i = 0; i < nr_new_particles; ++i)
 	{
@@ -153,15 +152,20 @@ void Particle::update()
 		//If the particle is alive, we update it.
 		if (cur_particle.Life > 0.0f)
 		{
-			cur_particle.Velocity.y += GRAVITY * Window::delta;
-			glm::vec3 change = glm::vec3(cur_particle.Velocity);
-			change *= Window::delta;
-
-			cur_particle.Position += change;
-
+			animate(cur_particle);
 		}
 	}
-	
+}
+
+/* Animate the particle. */
+void Particle::animate(Particles_struct &particle)
+{
+	//Update velocity according to gravity.
+	particle.Velocity.y += this->gravity * Window::delta;
+	glm::vec3 change = glm::vec3(particle.Velocity);
+	change *= Window::delta;
+	//Update it's position.
+	particle.Position += change;
 }
 
 /* Find the most recently unused particle to restart. */
@@ -193,6 +197,9 @@ void Particle::RespawnParticle(Particles_struct &particle)
 	GLfloat random_num = ((rand() % 100) - 50) / 10.0f;
 	GLfloat rand_color = 0.5 + ((rand() % 100) / 100.0f);
 
+	//Set it's life back to 1.
+	particle.Life = 1.0f;
+	//Update it's position.
 	if (toFollow != nullptr)
 	{
 		particle.Position = glm::vec3(toFollow->toWorld[3]);
@@ -201,11 +208,8 @@ void Particle::RespawnParticle(Particles_struct &particle)
 	{
 		particle.Position = glm::vec3(0.0f);
 	}
-
+	//Set it's color.
 	particle.Color = glm::vec4(rand_color, rand_color, rand_color, 1.0f);
-	particle.Life = 1.0f;
-
-	
 	//Randomize the velocity.
 	float dirX = (float)rand() * 2.0f - 1.0f;
 	float dirZ = (float)rand() * 2.0f - 1.0f;
@@ -218,7 +222,6 @@ void Particle::RespawnParticle(Particles_struct &particle)
 /* Draw the Particle. */
 void Particle::draw(GLuint shaderProgram)
 {
-	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
 	glm::mat4 MVP = Window::P * Window::V * toWorld;
 	glm::mat4 model = this->toWorld;//We don't really need this, but we'll pass it through just in case.
 	glm::mat4 view = glm::mat4(glm::mat3(Window::V));//Remove translation from the view matrix.
@@ -241,7 +244,7 @@ void Particle::draw(GLuint shaderProgram)
 			glUniform3f(glGetUniformLocation(shaderProgram, "offset"), particle.Position.x, particle.Position.y, particle.Position.z);
 			glUniform4f(glGetUniformLocation(shaderProgram, "p_color"), particle.Color.x, particle.Color.y, particle.Color.z, particle.Color.w);
 			//Draw the element.
-			glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, (GLsizei)6, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 		}
 	}
@@ -249,3 +252,12 @@ void Particle::draw(GLuint shaderProgram)
 	glBindVertexArray(0);//Unbind vertex.
 }
 
+
+void Particle::increaseGravity()
+{
+	this->gravity += 1;
+}
+void Particle::decreaseGravity()
+{
+	this->gravity -= 1;
+}
