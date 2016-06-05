@@ -9,58 +9,63 @@
 #include <stdio.h>
 #include "Water.h"
 
-#define SIZE 1000
+#define HEIGHT 3
+#define SIZE 500
+#define WATER_SIZE 150
 #define DRAW_SHADED 0
 #define DRAW_WIREFRAME 1
 
 /// 4x4 grid of points that will define the surface
 Point Points[4][4] = {
     {
-        { (2*SIZE),3,(2*SIZE) },
-        { SIZE,3,(2*SIZE) },
-        { -SIZE,3,(2*SIZE) },
-        {-(2*SIZE),3,(2*SIZE) }
+        { (2 * WATER_SIZE),HEIGHT,(2 * WATER_SIZE) },
+		{ WATER_SIZE,HEIGHT,(2 * WATER_SIZE) },
+		{ -WATER_SIZE,HEIGHT,(2 * WATER_SIZE) },
+        {-(2*WATER_SIZE),HEIGHT,(2*WATER_SIZE) }
     },
     {
-        { (2*SIZE),3,SIZE },
-        {  SIZE,3,SIZE },
-        { -SIZE,3,SIZE },
-        {-(2*SIZE),3,SIZE }
+        { (2*WATER_SIZE),HEIGHT,WATER_SIZE },
+        {  WATER_SIZE,HEIGHT,WATER_SIZE },
+        { -WATER_SIZE,HEIGHT,WATER_SIZE },
+        {-(2*WATER_SIZE),HEIGHT,WATER_SIZE }
     },
     {
-        { (2*SIZE),3,-SIZE },
-        {  SIZE,3,-SIZE },
-        { -SIZE,3,-SIZE },
-        {-(2*SIZE),3,-SIZE }
+        { (2*WATER_SIZE),HEIGHT,-WATER_SIZE },
+        {  WATER_SIZE,HEIGHT,-WATER_SIZE },
+        { -WATER_SIZE,HEIGHT,-WATER_SIZE },
+        {-(2*WATER_SIZE),HEIGHT,-WATER_SIZE }
     },
     {
-        { (2*SIZE),3,-(2*SIZE) },
-        {  SIZE,3,-(2*SIZE) },
-        { -SIZE,3,-(2*SIZE) },
-        {-(2*SIZE),3, -(2*SIZE) }
+        { (2*WATER_SIZE),HEIGHT,-(2*WATER_SIZE) },
+        {  WATER_SIZE,HEIGHT,-(2*WATER_SIZE) },
+        { -WATER_SIZE,HEIGHT,-(2*WATER_SIZE) },
+        {-(2*WATER_SIZE),HEIGHT, -(2*WATER_SIZE) }
     }
 };
 
-
-Water::Water()
+Water::Water(int x_d, int z_d)
 {
-	//Initialize water components.
+	//Setup the Water.
+	this->x = x_d * SIZE + (SIZE / 2);
+	this->z = z_d * SIZE + (SIZE / 2);
 	this->draw_mode = DRAW_SHADED;
-    this->toWorld = glm::mat4(1.0f);
-	this->level_of_detail = 600;//Define how many vertices (width/depth).
-    
+	this->level_of_detail = 300;//Define how many vertices (width/depth).
+	//Setup toWorld so that the terrain is at the center of the world.
+	this->toWorld = glm::mat4(1.0f);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
+	this->toWorld = translate*this->toWorld;
 	//Setup the water surface.
 	this->setupGeometry();
 	this->setupWater();
 }
 
-Water::Water(GLuint skyBox_texture)
+Water::Water(int x_d, int z_d, GLuint skyBox_texture)
 {
 	//Initialize water components.
 	this->draw_mode = DRAW_SHADED;
 	this->toWorld = glm::mat4(1.0f);
 	this->skyTexture = skyBox_texture;
-	this->level_of_detail = 600;//Define how many vertices (width/depth).
+	this->level_of_detail = 400;//Define how many vertices (width/depth).
 
 	//Setup the water surface.
 	this->setupGeometry();
@@ -80,11 +85,11 @@ Water::~Water()
 void Water::setupGeometry()
 {
 	/* Setting up verticies and normals. */
-	for (int i = 0; i != this->level_of_detail; ++i) {
+	for (unsigned int i = 0; i != this->level_of_detail; ++i) {
 		//Generate the parametric u value.
 		float u = (float)i / (this->level_of_detail - 1);
 		//Loop for the parametric v value, per section.
-		for (int j = 0; j != this->level_of_detail; ++j) {
+		for (unsigned int j = 0; j != this->level_of_detail; ++j) {
 			//Generate the parametric v value.
 			float v = (float)j / (this->level_of_detail - 1);
 			//Calculate the point on the surface
@@ -95,9 +100,9 @@ void Water::setupGeometry()
 		}
 	}
 	/* Setting up indices. */
-	for (int gx = 0; gx < this->level_of_detail - 1; ++gx)
+	for (unsigned int gx = 0; gx < this->level_of_detail - 1; gx++)
 	{
-		for (int gz = 0; gz < this->level_of_detail - 1; ++gz)
+		for (unsigned int gz = 0; gz < this->level_of_detail - 1; gz++)
 		{
 			int topLeft = (gx*this->level_of_detail) + gz;
 			int topRight = ((gx + 1)*this->level_of_detail) + gz;
@@ -262,7 +267,7 @@ void Water::draw(GLuint shaderProgram)
     //Bind for drawing.
     glBindVertexArray(VAO);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
-    glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei)this->indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 	//Set it back to fill.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

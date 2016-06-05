@@ -43,12 +43,11 @@ private:
 
 public:
 	//Constructor methods.
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map);
-	Terrain(float x_d, float z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map);
+	Terrain(int x_d, int z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map);
+	Terrain(int x_d, int z_d, const char* terrain_0, const char* terrain_1, const char* terrain_2, const char* terrain_3, const char* blend_map, const char* height_map);
 	~Terrain();
 	//Determine the terrain's position in the world.
-	float x;
-	float z;
+	float x, z;
 	glm::mat4 toWorld;
 	//Draw and update methods.
 	void toggleDrawMode();

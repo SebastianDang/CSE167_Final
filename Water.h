@@ -38,9 +38,12 @@ private:
 	void setupWater();
 
 public:
-	Water();
-	Water(GLuint skyBox_texture);
+	Water(int x_d, int z_d);
+	Water(int x_d, int z_d, GLuint skyBox_texture);
     ~Water();
+
+	//Determine the Water's position in the world.
+	int x, z;
 
 	GLuint skyTexture;
 

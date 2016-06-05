@@ -4,7 +4,6 @@
 #include <sstream> 
 
 #define TERRAIN_SIZE 500.0f
-#define SCENE_MODE 1
 
 /* Constructor to create a terrain map with a specified width and height. */
 Scenery::Scenery(int width, int height)
@@ -14,23 +13,25 @@ Scenery::Scenery(int width, int height)
 	this->height = height;
 	this->boundaries.x = width * TERRAIN_SIZE;
 	this->boundaries.y = height * TERRAIN_SIZE;
-	if (SCENE_MODE == 0)
-	{
-		Terrain * cur_terrain = new Terrain(0.0f, 0.0f, "../terrain/texture_0.ppm", "../terrain/texture_1.ppm", "../terrain/texture_2.ppm", "../terrain/texture_3.ppm", "../terrain/blend_maps/blend_map_master.ppm", "../terrain/height_maps/height_map_master.ppm");
-		terrains.push_back(cur_terrain);
-	}
-	else if (SCENE_MODE == 1) {
-		generateTerrains();
-		stitchTerrains();
-	}
+	this->generateTerrains();
+	this->stitchTerrains();
+	this->generateWater();
 }
 
 /* Deconstructor to safely delete when finished. */
 Scenery::~Scenery()
 {
-
+	for (Terrain * terrain : terrains)
+	{
+		delete(terrain);
+	}
+	for (Water * water : waters)
+	{
+		delete(water);
+	}
 }
 
+/* Generate terrains with width and height. */
 void Scenery::generateTerrains()
 {
 	//Generate terrains with width and height.
@@ -75,12 +76,35 @@ void Scenery::stitchTerrains()
 	}
 }
 
+/* Generate water with width and height. */
+void Scenery::generateWater()
+{
+	//Generate terrains with width and height.
+	for (int i = 0; i < this->height; i++)
+	{
+		for (int j = 0; j < this->width; j++)
+		{
+			Water * cur_water = new Water(j, i);
+			waters.push_back(cur_water);
+		}
+	}
+}
+
 /* Calls draw on all the terrains. */
-void Scenery::draw(GLuint shaderProgram)
+void Scenery::draw_terrain(GLuint shaderProgram)
 {
 	for (int i = 0; i < terrains.size(); i++)
 	{
 		terrains[i]->draw(shaderProgram);
+	}
+}
+
+/* Calls draw on all the waters. */
+void Scenery::draw_water(GLuint shaderProgram)
+{
+	for (int i = 0; i < waters.size(); i++)
+	{
+		waters[i]->draw(shaderProgram);
 	}
 }
 
@@ -104,8 +128,8 @@ int Scenery::getTerrain(glm::vec3 position)
 		return 0;
 	}
 
-	int terrain_x = floor(position_x);
-	int terrain_z = floor(position_z);
+	int terrain_x = (int)floor(position_x);
+	int terrain_z = (int)floor(position_z);
 
 	return (terrain_z*width + terrain_x);
 }
@@ -113,16 +137,8 @@ int Scenery::getTerrain(glm::vec3 position)
 /* Return the height for the given terrain (given position in the world). */
 float Scenery::getHeight(glm::vec3 position)
 {
-	if (SCENE_MODE == 0)
-	{
-		Terrain * terrain = terrains[0];
-		return terrain->getHeight(position);
-	}
-	else if (SCENE_MODE == 1)
-	{
-		Terrain * terrain = terrains[getTerrain(position)];
-		return terrain->getHeight(position);
-	}
+	Terrain * terrain = terrains[getTerrain(position)];
+	return terrain->getHeight(position);
 }
 
 /* Return the boundaries of the scenery. */

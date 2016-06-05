@@ -69,10 +69,9 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(1, 1);//Initialize the scenery for the entire program.
+	scenery = new Scenery(8, 8);//Initialize the scenery for the entire program.
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
-	water = new Water(skyBox->getSkyBox());
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
@@ -116,7 +115,6 @@ void Window::clean_up()
 	delete(world_light);
 	delete(object_1);
 	delete(object_1_camera);
-	delete(water);
 	delete(particle);
 
 	//Delete shaders.
@@ -230,12 +228,12 @@ void Window::redrawScene()
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
 	//Render the terrain
-	scenery->draw(shaderProgram_terrain);
+	scenery->draw_terrain(shaderProgram_terrain);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_water);
 	//Render the terrain
-	water->draw(shaderProgram_water);
+	scenery->draw_water(shaderProgram_water);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_skybox);

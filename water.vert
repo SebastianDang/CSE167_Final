@@ -16,8 +16,8 @@ out vec3 FragNormal;
 out vec3 FragPos;
 
 //shader constants
-const float amplitude = 0.725;
-const float frequency = 1000;
+const float amplitude = 0.525;
+const float frequency = 20;
 const float PI = 3.14159;
 
 

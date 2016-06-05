@@ -6,6 +6,7 @@
 #include "Window.h"
 #include "Definitions.h"
 #include "Terrain.h"
+#include "Water.h"
 
 class Scenery
 {
@@ -14,11 +15,15 @@ private:
 	int width;
 	int height;
 	glm::vec2 boundaries;
-	//Access terrains from the scenery class.
+	//Access elements from the scenery class.
 	std::vector<Terrain*> terrains;
+	std::vector<Water*> waters;
+	//Terrains
 	void generateTerrains();
 	void stitchTerrains();
 	int getTerrain(glm::vec3 position);
+	//Water
+	void generateWater();
 
 public:
 	//Constructor methods.
@@ -30,6 +35,7 @@ public:
 
 	void toggleDrawMode();
 
-	void draw(GLuint shaderProgram);
+	void draw_terrain(GLuint shaderProgram);
+	void draw_water(GLuint shaderProgram);
 };
 #endif
