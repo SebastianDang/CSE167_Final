@@ -1,21 +1,19 @@
 #version 330 core
 
-//Setup the object's material.
 in vec3 FragPos;
 in vec3 FragNormal;
 
-uniform vec3 viewPos;
+uniform vec3 viewCam;
 uniform samplerCube skybox;
-uniform float randVal;
 //Define out variable for the fragment shader: color.
 out vec4 color;
 
-
-
 void main()
-{    
+{
+	vec4 total_color = vec4(0, 0, 0, 1);
+
 	//Fake lighting
-	vec3 light_color = vec3(1.0-0.3, 0.929-0.3, 0.929);
+	vec3 light_color = vec3(0.1, 0.129, 0.929);
 	vec3 toLightVector = vec3(1.0, 1.0, -0.2);
 	vec3 unitNormal = normalize(FragNormal);
 	vec3 unitLightVector = normalize(toLightVector);
@@ -24,33 +22,32 @@ void main()
 	float brightness = max(nDotl, 0.1);
 	vec3 diffuse = brightness * light_color;
 
-	vec3 unitVectorToCamera = normalize(FragPos - viewPos);
+	vec3 unitVectorToCamera = normalize(FragPos - viewCam);
 	vec3 lightDirection = -unitLightVector;
 	vec3 reflectedLightDirection = reflect(lightDirection,unitNormal);
 	
 	float specularFactor = dot(reflectedLightDirection , unitVectorToCamera);
-	specularFactor = max(specularFactor, 0.0);
-	float dampedFactor = pow(specularFactor,0.5);
-	float reflectivity = 0.05;
+	specularFactor = max(specularFactor, 0.01);
+	float dampedFactor = pow(specularFactor, 0.5);
+	float reflectivity = 0.1;
 	vec3 finalSpecular = dampedFactor * reflectivity * light_color;
 
-	color = vec4(diffuse, 1.0) + vec4(finalSpecular, 1.0);
+	total_color = vec4(diffuse, 1.0) + vec4(finalSpecular, 1.0);
     
-    //Refraction ratio for water to air
-    float ratio = 1.33/1.00;
+    //Water to air ratio.
+    float ratio = 1.0/1.33;
     
-    vec3 I = normalize(FragPos - viewPos);
+    vec3 I = normalize(FragPos - viewCam);
     
-    vec3 reflect_factor = reflect(I, normalize(FragNormal) );
-    vec3 refract_factor = refract(I, normalize(FragNormal), ratio);
-	
-	vec4 colorReflect = texture(skybox, reflect_factor);
-	vec4 colorRefract = texture(skybox, refract_factor);
+    vec3 reflection = reflect(I, normalize(FragNormal));
+    vec3 refraction = refract(I, normalize(FragNormal), ratio);
 
-	colorReflect *= 0.8;
-	colorRefract *= 0.3;
+    vec4 colorReflection = texture(skybox, reflection);
+    vec4 colorRefraction = texture(skybox, refraction);
 
-	color = colorReflect + colorRefract;
+	float percent = 0.3;
+    
+    color = normalize(mix(colorReflection, colorRefraction, percent));
 
 }
     
