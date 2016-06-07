@@ -83,8 +83,9 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(8, 8, skyBox->getSkyBox());//Initialize the scenery for the entire program.
+	scenery = new Scenery(1, 1, skyBox->getSkyBox());//Initialize the scenery for the entire program.
 	world_light = new Light();//Initialize the global light.
+	SoundEngine = irrklang::createIrrKlangDevice();
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
 	#ifdef _WIN32 
@@ -125,6 +126,7 @@ void Window::initialize_objects()
 	//Update the shader program and anything else.
 	world_light->updateLighting(shaderProgram);
 	object_1_camera->window_updateCamera();
+	SoundEngine->play2D("../audio/water.mp3", GL_TRUE);
 }
 
 void Window::clean_up()
@@ -399,6 +401,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	{
 		if (wKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_1->W_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
@@ -406,6 +409,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (aKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_1->A_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
@@ -413,6 +417,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (sKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_1->S_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
@@ -420,6 +425,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (dKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_1->D_movement(scenery->getBounds());
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
@@ -431,6 +437,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 	{
 		if (wKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_2->W_movement(scenery->getBounds());
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
@@ -438,6 +445,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (aKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_2->A_movement(scenery->getBounds());
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
@@ -445,6 +453,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (sKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_2->S_movement(scenery->getBounds());
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
@@ -452,6 +461,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		}
 		if (dKey == GLFW_PRESS)
 		{
+			SoundEngine->play2D("../audio/grass.mp3", GL_FALSE);
 			object_2->D_movement(scenery->getBounds());
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
