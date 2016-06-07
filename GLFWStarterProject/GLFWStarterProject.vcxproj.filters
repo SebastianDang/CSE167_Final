@@ -191,5 +191,11 @@
     <None Include="..\particle.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="..\collision.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\collision.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

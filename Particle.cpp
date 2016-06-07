@@ -2,7 +2,7 @@
 #include "Definitions.h"
 #include <time.h>
 
-#define SIZE 0.5f
+#define SIZE 40.0f
 #define AREA_SIZE 500
 #define RANDOM_SIZE 500
 #define RANDOM_HEIGHT 0.5f

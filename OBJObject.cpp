@@ -16,7 +16,6 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->currentTurnSpeed = 0.0f;
 	//Initialize World and material.
 	this->toWorld = glm::mat4(1.0f);//Default at the origin.
-	this->toWorld[3] = glm::vec4(0.0, 1.0f, 0.0, 1.0f);
 	this->material = material;//Set the material to the passed in material number!
 	//Parse the object @ filepath.
 	this->parse(filepath);
@@ -24,8 +23,8 @@ OBJObject::OBJObject(const char *filepath, int material)
 	this->setupObject();
 	//Setup the object material.
 	this->setupMaterial();
-	//Initialize BoxCoords.
-	this->setCube();
+	//Initialize BoxCoords for the collision box.
+	this->setupGeometry();
 	this->bindCube();
 	this->collisionFlag = 0;
 }
@@ -94,9 +93,9 @@ void OBJObject::parse(const char *filepath)
 	avgY = (minY + maxY) / 2;
 	avgZ = (minX + maxZ) / 2;
 	//Calculate scale value.
-	float scale_x = (maxX - avgX);
-	float scale_y = (maxY - avgY);
-	float scale_z = (maxZ - avgZ);
+	float scale_x = (maxX - minX);
+	float scale_y = (maxY - minY);
+	float scale_z = (maxZ - minZ);
 	if (scale_x > scale_v) { scale_v = scale_x; }
 	if (scale_y > scale_v) { scale_v = scale_y; }
 	if (scale_z > scale_v) { scale_v = scale_z; }
@@ -117,6 +116,8 @@ void OBJObject::parse(const char *filepath)
 
 	this->average = glm::vec3(avgX, avgY, avgZ);
 	this->longestDim = scale_v;
+
+	printf("max_x %f, max_y %f, max_z %f\nmin_x %f, min_y %f, min_z %f \navg_x %f avg_y %f avg_z %f\nl_dimension %f\n", maxX, maxY, maxZ, minX, minY, minZ, avgX, avgY, avgZ, longestDim);
 }
 
 /* Setup the object for modern openGL rendering. */
@@ -196,6 +197,104 @@ void OBJObject::setupMaterial()
 		this->objMaterial.specular = glm::vec3(0.5f, 0.5f, 0.5f);
 		this->objMaterial.shininess = 32.0f;
 	}
+}
+
+/* Setup the cube geometry for the bounding box. */
+void OBJObject::setupGeometry() {
+
+	glm::vec3 v0 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
+	glm::vec3 v1 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
+	glm::vec3 v2 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
+	glm::vec3 v3 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
+
+	glm::vec3 v4 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
+	glm::vec3 v5 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
+	glm::vec3 v6 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
+	glm::vec3 v7 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
+
+	v0 = glm::vec3((v0.x - average.x) / longestDim, (v0.y - average.y) / longestDim, (v0.z - average.z) / longestDim);
+	v1 = glm::vec3((v1.x - average.x) / longestDim, (v1.y - average.y) / longestDim, (v1.z - average.z) / longestDim);
+	v2 = glm::vec3((v2.x - average.x) / longestDim, (v2.y - average.y) / longestDim, (v2.z - average.z) / longestDim);
+	v3 = glm::vec3((v3.x - average.x) / longestDim, (v3.y - average.y) / longestDim, (v3.z - average.z) / longestDim);
+	v4 = glm::vec3((v4.x - average.x) / longestDim, (v4.y - average.y) / longestDim, (v4.z - average.z) / longestDim);
+	v5 = glm::vec3((v5.x - average.x) / longestDim, (v5.y - average.y) / longestDim, (v5.z - average.z) / longestDim);
+	v6 = glm::vec3((v6.x - average.x) / longestDim, (v6.y - average.y) / longestDim, (v6.z - average.z) / longestDim);
+	v7 = glm::vec3((v7.x - average.x) / longestDim, (v7.y - average.y) / longestDim, (v7.z - average.z) / longestDim);
+
+	//front face
+	boxCoords.push_back(v0);
+	boxCoords.push_back(v1);
+	boxCoords.push_back(v3);
+	boxCoords.push_back(v3);
+	boxCoords.push_back(v1);
+	boxCoords.push_back(v2);
+
+	//right face
+	boxCoords.push_back(v3);
+	boxCoords.push_back(v2);
+	boxCoords.push_back(v7);
+	boxCoords.push_back(v7);
+	boxCoords.push_back(v2);
+	boxCoords.push_back(v6);
+
+	//left face
+	boxCoords.push_back(v4);
+	boxCoords.push_back(v5);
+	boxCoords.push_back(v0);
+	boxCoords.push_back(v0);
+	boxCoords.push_back(v5);
+	boxCoords.push_back(v1);
+
+	//bottom face
+	boxCoords.push_back(v1);
+	boxCoords.push_back(v5);
+	boxCoords.push_back(v2);
+	boxCoords.push_back(v2);
+	boxCoords.push_back(v5);
+	boxCoords.push_back(v6);
+
+	//top face
+	boxCoords.push_back(v4);
+	boxCoords.push_back(v0);
+	boxCoords.push_back(v7);
+	boxCoords.push_back(v7);
+	boxCoords.push_back(v0);
+	boxCoords.push_back(v3);
+
+	//back face
+	boxCoords.push_back(v7);
+	boxCoords.push_back(v6);
+	boxCoords.push_back(v4);
+	boxCoords.push_back(v4);
+	boxCoords.push_back(v6);
+	boxCoords.push_back(v5);
+	
+
+}
+
+/* Bind the cube to openGL for glsl shading. */
+void OBJObject::bindCube() {
+	glGenVertexArrays(1, &VAOBOX);
+	glGenBuffers(1, &VBOBOX);
+
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	glBindVertexArray(VAOBOX);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOBOX);
+	glBufferData(GL_ARRAY_BUFFER, boxCoords.size() * sizeof(glm::vec3), &boxCoords[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
+		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
+		GL_FLOAT, // What type these components are
+		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
+		3 * sizeof(GLfloat), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
+		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
+
+	glEnableVertexAttribArray(0);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
 }
 
 /* Update Material if needed from any changes in the material struct */
@@ -286,16 +385,26 @@ void OBJObject::update_height(float height)
 	this->toWorld[3].y = height + 0.8f;
 }
 
+/* Collision detection. */
 bool OBJObject::collision(OBJObject * obj2) {
 
-	bool collisionX = toWorld[3][0] + ((maxX - minX) / 2 - average.x) / longestDim >= obj2->toWorld[3][0] - 0.5f &&
-		obj2->toWorld[3][0] + ((obj2->maxX - obj2->minX) / 2 - obj2->average.x) / obj2->longestDim >= toWorld[3][0] - 0.5f;
+	glm::vec4 coord_a = this->toWorld[3];
+	glm::vec4 coord_b = obj2->toWorld[3];
 
-	bool collisionY = toWorld[3][1] + ((maxY - minY) / 2 - average.y) / longestDim >= obj2->toWorld[3][1] - 0.5f &&
-		obj2->toWorld[3][1] + ((obj2->maxY - obj2->minY) / 2 - obj2->average.y) / obj2->longestDim >= toWorld[3][1] - 0.5f;
+	float a_x_unit = (maxX - minX / 2);
+	float a_y_unit = (maxY - minY / 2);
+	float a_z_unit = (maxZ - minZ / 2);
 
-	bool collisionZ = toWorld[3][2] + ((maxZ - minZ) / 2 - average.z) / longestDim >= obj2->toWorld[3][2] - 0.5f &&
-		obj2->toWorld[3][2] + ((obj2->maxZ - obj2->minZ) / 2 - obj2->average.z) / obj2->longestDim >= toWorld[3][2] - 0.5f;
+	float b_x_unit = (maxX - minX / 2);
+	float b_y_unit = (maxY - minY / 2);
+	float b_z_unit = (maxZ - minZ / 2);
+
+
+	bool collisionX = (coord_a.x + a_x_unit) >= coord_b.x && (coord_b.x + b_x_unit) >= coord_a.x;
+
+	bool collisionY = (coord_a.y + a_y_unit) >= coord_b.y && (coord_b.y + b_y_unit) >= coord_a.y;
+
+	bool collisionZ = (coord_a.z + a_z_unit) >= coord_b.z && (coord_b.z + b_z_unit) >= coord_a.z;
 
 	bool collide = collisionX && collisionY && collisionZ;
 	if (collide) {
@@ -309,108 +418,23 @@ bool OBJObject::collision(OBJObject * obj2) {
 	return collisionX && collisionY && collisionZ;
 }
 
-void OBJObject::setCube() {
-
-	boxCoords.clear();
-
-	glm::vec3 v0 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
-	glm::vec3 v1 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
-	glm::vec3 v2 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
-	glm::vec3 v3 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
-
-	glm::vec3 v4 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
-	glm::vec3 v5 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
-	glm::vec3 v6 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
-	glm::vec3 v7 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] - ((maxZ - minZ) / 2));
-
-	v0 = glm::vec3((v0.x - average.x) / longestDim, (v0.y - average.y) / longestDim, (v0.z - average.z) / longestDim);
-	v1 = glm::vec3((v1.x - average.x) / longestDim, (v1.y - average.y) / longestDim, (v1.z - average.z) / longestDim);
-	v2 = glm::vec3((v2.x - average.x) / longestDim, (v2.y - average.y) / longestDim, (v2.z - average.z) / longestDim);
-	v3 = glm::vec3((v3.x - average.x) / longestDim, (v3.y - average.y) / longestDim, (v3.z - average.z) / longestDim);
-	v4 = glm::vec3((v4.x - average.x) / longestDim, (v4.y - average.y) / longestDim, (v4.z - average.z) / longestDim);
-	v5 = glm::vec3((v5.x - average.x) / longestDim, (v5.y - average.y) / longestDim, (v5.z - average.z) / longestDim);
-	v6 = glm::vec3((v6.x - average.x) / longestDim, (v6.y - average.y) / longestDim, (v6.z - average.z) / longestDim);
-	v7 = glm::vec3((v7.x - average.x) / longestDim, (v7.y - average.y) / longestDim, (v7.z - average.z) / longestDim);
-
-	//front face
-	boxCoords.push_back(v0);
-	boxCoords.push_back(v1);
-	boxCoords.push_back(v2);
-	boxCoords.push_back(v0);
-	boxCoords.push_back(v2);
-	boxCoords.push_back(v3);
-
-	//right face
-	boxCoords.push_back(v0);
-	boxCoords.push_back(v3);
-	boxCoords.push_back(v4);
-	boxCoords.push_back(v4);
-	boxCoords.push_back(v5);
-	boxCoords.push_back(v0);
-
-	//top face
-	boxCoords.push_back(v0);
-	boxCoords.push_back(v5);
-	boxCoords.push_back(v6);
-	boxCoords.push_back(v6);
-	boxCoords.push_back(v1);
-	boxCoords.push_back(v0);
-
-	//back face
-	boxCoords.push_back(v7);
-	boxCoords.push_back(v4);
-	boxCoords.push_back(v5);
-	boxCoords.push_back(v5);
-	boxCoords.push_back(v6);
-	boxCoords.push_back(v7);
-
-	//left face
-	boxCoords.push_back(v7);
-	boxCoords.push_back(v2);
-	boxCoords.push_back(v1);
-	boxCoords.push_back(v1);
-	boxCoords.push_back(v6);
-	boxCoords.push_back(v7);
-
-	//bottom face
-	boxCoords.push_back(v7);
-	boxCoords.push_back(v4);
-	boxCoords.push_back(v3);
-	boxCoords.push_back(v3);
-	boxCoords.push_back(v2);
-	boxCoords.push_back(v7);
-
-}
-
-void OBJObject::bindCube() {
-	glGenVertexArrays(1, &VAOBOX);
-	glGenBuffers(1, &VBOBOX);
-
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-	glBindVertexArray(VAOBOX);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBOBOX);
-	glBufferData(GL_ARRAY_BUFFER, boxCoords.size() * sizeof(glm::vec3), &boxCoords[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0,// This first parameter x should be the same as the number passed into the line "layout (location = x)" in the vertex shader. In this case, it's 0. Valid values are 0 to GL_MAX_UNIFORM_LOCATIONS.
-		3, // This second line tells us how any components there are per vertex. In this case, it's 3 (we have an x, y, and z component)
-		GL_FLOAT, // What type these components are
-		GL_FALSE, // GL_TRUE means the values should be normalized. GL_FALSE means they shouldn't
-		3 * sizeof(GLfloat), // Offset between consecutive vertex attributes. Since each of our vertices have 3 floats, they should have the size of 3 floats in between
-		(GLvoid*)0); // Offset of the first vertex's component. In our case it's 0 since we don't pad the vertices array with anything.
-
-	glEnableVertexAttribArray(0);
-
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
-
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
-}
-
+/* Draw the bounding box. */
 void OBJObject::drawBox(GLuint shaderProgram) {
 
-	glm::mat4 MVP = Window::P * Window::V * toWorld;
-	setCube();
+	this->setupGeometry();
 
+	//Calculate combination of the model (toWorld), view (camera inverse), and perspective matrices. Send to shader.
+	glm::mat4 MVP = Window::P * Window::V * toWorld;
+	glm::mat4 model = this->toWorld;
+	glm::mat4 view = Window::V;
+	glm::mat4 projection = Window::P;
+	//Set MVP(Total calculated, easier to multiply in the shader) for the shader.
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	//Set individual components for shader calculations (Model, View, Projection).
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &model[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
+	//Set the collide ID for the new color.
 	GLuint collideID = glGetUniformLocation(shaderProgram, "collisionFlag");
 	if (collisionFlag) {
 		glUniform1i(collideID, 1);
@@ -418,14 +442,11 @@ void OBJObject::drawBox(GLuint shaderProgram) {
 	else {
 		glUniform1i(collideID, 0);
 	}
-	// We need to calculate this because as of GLSL version 1.40 (OpenGL 3.1, released March 2009), gl_ModelViewProjectionMatrix has been
-	// removed from the language. The user is expected to supply this matrix to the shader when using modern OpenGL.
-	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
+	//Draw the box.
 	glBindVertexArray(VAOBOX);
+	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, boxCoords.size());
+	glDrawArrays(GL_TRIANGLES, 0, boxCoords.size());
 	glBindVertexArray(0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

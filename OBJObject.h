@@ -56,7 +56,7 @@ public:
 	std::vector<glm::vec3> boxCoords;
 
 	bool collision(OBJObject * obj);
-	void setCube();
+	void setupGeometry();
 	void bindCube();
 	void drawBox(GLuint shaderProgram);
 

@@ -80,7 +80,7 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(1, 1, skyBox->getSkyBox());//Initialize the scenery for the entire program.
+	scenery = new Scenery(8, 8, skyBox->getSkyBox());//Initialize the scenery for the entire program.
 	world_light = new Light();//Initialize the global light.
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
@@ -88,6 +88,7 @@ void Window::initialize_objects()
 
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("../obj/songoku.obj", 5);
+	object_1->toWorld = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f)) * object_1->toWorld;
 	object_1_camera = new Camera(object_1);
 
 	object_2 = new OBJObject("../obj/pod.obj", 3);
@@ -304,6 +305,7 @@ void Window::drawTerrain()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+	object_2->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
@@ -326,6 +328,7 @@ void Window::drawWater()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+	object_2->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_water);
@@ -348,6 +351,7 @@ void Window::drawParticles()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+	object_2->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_particle);
