@@ -491,7 +491,8 @@ void Terrain::draw(GLuint shaderProgram)
 	glUniform1f(glGetUniformLocation(shaderProgram, "min_height"), this->min_height);
 	//Update viewPos.
 	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
-	//glDisable(GL_CULL_FACE);
+	//Update toon_shade.
+	glUniform1i(glGetUniformLocation(shaderProgram, "toon_shade"), Window::toon_shading);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
 	{

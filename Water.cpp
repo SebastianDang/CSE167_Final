@@ -61,12 +61,16 @@ Water::Water(int x_d, int z_d)
 
 Water::Water(int x_d, int z_d, GLuint skyBox_texture)
 {
-	//Initialize water components.
+	//Setup the Water.
+	this->x = x_d * SIZE + (SIZE / 2);
+	this->z = z_d * SIZE + (SIZE / 2);
 	this->draw_mode = DRAW_SHADED;
-	this->toWorld = glm::mat4(1.0f);
+	this->level_of_detail = 300;//Define how many vertices (width/depth).
 	this->skyTexture = skyBox_texture;
-	this->level_of_detail = 400;//Define how many vertices (width/depth).
-
+	//Setup toWorld so that the terrain is at the center of the world.
+	this->toWorld = glm::mat4(1.0f);
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(this->x, 0, this->z));
+	this->toWorld = translate*this->toWorld;
 	//Setup the water surface.
 	this->setupGeometry();
 	this->setupWater();
@@ -253,8 +257,10 @@ void Water::draw(GLuint shaderProgram)
     glm::mat4 MVP = Window::P * Window::V * toWorld;
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "MVP"), 1, GL_FALSE, &MVP[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &toWorld[0][0]);
-    glUniform3f(glGetUniformLocation(shaderProgram, "viewCam"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
+    glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
     glUniform1f(glGetUniformLocation(shaderProgram, "time"), time);
+	//Update toon_shade.
+	glUniform1i(glGetUniformLocation(shaderProgram, "toon_shade"), Window::toon_shading);
 	//Set draw_mode to view wireframe version or filled version.
 	if (draw_mode == DRAW_SHADED)
 	{

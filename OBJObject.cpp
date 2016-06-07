@@ -219,6 +219,8 @@ void OBJObject::draw(GLuint shaderProgram)
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
 	//Update the viewPosition.
 	glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), Window::camera_pos.x, Window::camera_pos.y, Window::camera_pos.z);
+	//Update toon_shade.
+	glUniform1i(glGetUniformLocation(shaderProgram, "toon_shade"), Window::toon_shading);
 	//Update the material.
 	updateMaterial(shaderProgram);
 	//Bind for rendering.

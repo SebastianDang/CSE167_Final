@@ -13,6 +13,7 @@ uniform sampler2D blendMap;
 
 uniform float max_height;
 uniform float min_height;
+uniform bool toon_shade;
 
 //Define any in variables from the vertex shader.
 in vec3 FragPos;
@@ -49,6 +50,18 @@ void main()
 	float brightness = max(nDotl, 0.1);
 	vec3 diffuse = brightness * light_color;
 
+	//Toon shading
+	float toon_shade_effect = 1.0;
+	if (toon_shade)
+	{
+		if(brightness > 0.98)	toon_shade_effect = 1.0;
+		else if(brightness > 0.95)	toon_shade_effect = 0.9;
+		else if(brightness > 0.5)	toon_shade_effect = 0.7;
+		else if(brightness > 0.05)	toon_shade_effect = 0.35;
+		else	toon_shade_effect = 1.0;
+	}
+	diffuse = toon_shade_effect * diffuse;
+
 	vec3 unitVectorToCamera = normalize(FragPos - viewPos);
 	vec3 lightDirection = -unitLightVector;
 	vec3 reflectedLightDirection = reflect(lightDirection,unitNormal);
@@ -61,13 +74,17 @@ void main()
 
 	total_color = vec4(diffuse, 1.0) * total_color + vec4(finalSpecular, 1.0);
 
-	//Reflection
-	//vec3 I = normalize(FragPos - viewPos);
-	//vec3 R = reflect(I, normalize(FragNormal));
-	//vec4 reflect_color = texture(skybox, R) * reflect_intensity;
-	
-	//total_color += reflect_color;
-
 	color = total_color;
+
+	if (toon_shade)
+	{
+		float edge = dot(normalize(viewPos - FragPos), FragNormal);
+		edge = max(0, edge);
+		if (edge < 0.01)
+		{
+			color = 0.0 * color;
+		}
+	}
+
 }
 
