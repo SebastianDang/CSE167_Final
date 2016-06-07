@@ -76,6 +76,9 @@ float Window::delta;
 //Toon shading boolean.
 bool Window::toon_shading = false;
 
+//Sounds.
+irrklang::ISoundEngine *SoundEngine;
+
 void Window::initialize_objects()
 {
 	//Initialize world variables.
