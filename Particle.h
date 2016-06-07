@@ -14,6 +14,8 @@ private:
 	std::vector<glm::vec3> vertices;//v
 	std::vector<unsigned int> indices;//f
 
+	float x, z;
+
 	GLuint VAO, VBO, EBO;
 
 	glm::mat4 toWorld;
@@ -28,7 +30,7 @@ private:
 	void animate(Particles_struct &particle);
 public:
 	/* Object constructor and setups */
-	Particle();
+	Particle(int x_d, int z_d);
 	Particle(OBJObject * follow);
 	~Particle();
 

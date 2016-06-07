@@ -6,16 +6,18 @@
 #define TERRAIN_SIZE 500.0f
 
 /* Constructor to create a terrain map with a specified width and height. */
-Scenery::Scenery(int width, int height)
+Scenery::Scenery(int width, int height, GLuint skybox_texture)
 {
 	//Setup the width, height, and boundaries of the scene.
 	this->width = width;
 	this->height = height;
 	this->boundaries.x = width * TERRAIN_SIZE;
 	this->boundaries.y = height * TERRAIN_SIZE;
+	this->skybox = skybox_texture;
 	this->generateTerrains();
 	this->stitchTerrains();
 	this->generateWater();
+	this->generateParticles();
 }
 
 /* Deconstructor to safely delete when finished. */
@@ -28,6 +30,10 @@ Scenery::~Scenery()
 	for (Water * water : waters)
 	{
 		delete(water);
+	}
+	for (Particle * particle : particles)
+	{
+		delete(particle);
 	}
 }
 
@@ -84,8 +90,22 @@ void Scenery::generateWater()
 	{
 		for (int j = 0; j < this->width; j++)
 		{
-			Water * cur_water = new Water(j, i);
+			Water * cur_water = new Water(j, i, this->skybox);
 			waters.push_back(cur_water);
+		}
+	}
+}
+
+/* Generate water with width and height. */
+void Scenery::generateParticles()
+{
+	//Generate terrains with width and height.
+	for (int i = 0; i < this->height; i++)
+	{
+		for (int j = 0; j < this->width; j++)
+		{
+			Particle * cur_particle = new Particle(j, i);
+			particles.push_back(cur_particle);
 		}
 	}
 }
@@ -108,12 +128,25 @@ void Scenery::draw_water(GLuint shaderProgram)
 	}
 }
 
+/* Calls draw on all the particles. */
+void Scenery::draw_particles(GLuint shaderProgram)
+{
+	for (int i = 0; i < particles.size(); i++)
+	{
+		particles[i]->draw(shaderProgram);
+	}
+}
+
 /* Toggles the draw mode for wireframe mode or fill mode. */
 void Scenery::toggleDrawMode()
 {
 	for (int i = 0; i < terrains.size(); i++)
 	{
 		terrains[i]->toggleDrawMode();
+	}
+	for (int i = 0; i < waters.size(); i++)
+	{
+		waters[i]->toggleDrawMode();
 	}
 }
 
@@ -146,4 +179,13 @@ glm::vec2 Scenery::getBounds()
 {
 	glm::vec2 toReturn = this->boundaries;
 	return toReturn;
+}
+
+/* Update the particles for animation. */
+void Scenery::update_particles()
+{
+	for (int i = 0; i < particles.size(); i++)
+	{
+		particles[i]->update();
+	}
 }

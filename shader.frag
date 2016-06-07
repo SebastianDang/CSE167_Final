@@ -43,6 +43,8 @@ uniform vec3 lightColor;
 uniform vec3 viewPos;
 uniform samplerCube skybox;
 uniform float reflect_intensity;
+uniform bool toon_shade;
+
 
 //Define any in variables from the vertex shader.
 in vec3 FragPos;
@@ -90,6 +92,17 @@ void main()
 	vec4 reflect_color = texture(skybox, R) * reflect_intensity;
 	//Combined
 	color = diffuse_color + reflect_color;
+
+	if (toon_shade)
+	{
+		float edge = dot(normalize(viewPos - FragPos), FragNormal);
+		edge = max(0, edge);
+		if (edge < 0.01)
+		{
+			color = 0.0 * color;
+		}
+	}
+
 }
 
 //Calculates the color when using a directional light.
@@ -102,6 +115,18 @@ vec3 CalcDirLight(DirLight dirLight, vec3 norm, vec3 viewDir)
     vec3 lightDir = normalize(-dirLight.direction);//No calculation, just the light direction.
     float maxDiffuse = max(0.0, dot(norm, lightDir));
 	vec3 l_diffuse = material.diffuse * dirLight.diffuse * maxDiffuse;
+
+	//Toon shading
+	float toon_shade_effect = 1.0;
+	if (toon_shade)
+	{
+		if(maxDiffuse > 0.98)	toon_shade_effect = 1.0;
+		else if(maxDiffuse > 0.95)	toon_shade_effect = 0.9;
+		else if(maxDiffuse > 0.5)	toon_shade_effect = 0.7;
+		else if(maxDiffuse > 0.05)	toon_shade_effect = 0.35;
+		else	toon_shade_effect = 1.0;
+	}
+	l_diffuse = toon_shade_effect * l_diffuse;
 
 	//Calculate Specular: Ks * Ls * max (0, r dot v) ^ alpha
 	vec3 reflectDir = reflect(-lightDir, norm);

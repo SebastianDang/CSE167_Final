@@ -13,7 +13,13 @@
 
 using namespace std;
 
-const char* window_title = "CSE 167 Final";
+const char* window_title = "The Island";
+
+//Define draw modes.
+#define DRAW_MODE_ALL 0
+#define DRAW_MODE_TERRAIN 1
+#define DRAW_MODE_WATER 2
+#define DRAW_MODE_PARTICLE 3
 
 //Define Mouse control status for idle, left hold, right hold.
 #define IDLE 0
@@ -27,7 +33,6 @@ const char* window_title = "CSE 167 Final";
 #define CAMERA_3 3
 
 //Define any cameras here.
-Camera * world_camera;
 Camera * object_1_camera;
 
 //Define any objects here.
@@ -37,8 +42,6 @@ OBJObject * object_1;
 SkyBox * skyBox;
 Scenery * scenery;
 Light * world_light;
-Water * water;
-Particle * particle;
 
 //Define any shaders here.
 GLint shaderProgram;
@@ -54,23 +57,26 @@ double Window::x;//Current mouse x coordinate.
 double Window::y;//Current mouse y coordinate.
 int Window::mouse_status = IDLE;//Define the mouse status for any clicks.
 glm::vec3 Window::lastPoint;//Last point clicked.
-int Window::camera_mode = CAMERA_WORLD;//Defined camera for controls.
+int Window::camera_mode = CAMERA_1;//Defined camera for controls.
 glm::vec3 Window::camera_pos = glm::vec3(0.0f, 0.0f, 20.0f);//Default.
 glm::vec3 Window::camera_look_at = glm::vec3(0.0f, 0.0f, 0.0f);//Default.
 glm::vec3 Window::camera_up = glm::vec3(0.0f, 1.0f, 0.0f);//Default. 
 glm::mat4 Window::P;//Perspective.
 glm::mat4 Window::V;//View.
+int Window::draw_mode = DRAW_MODE_ALL;
 
 //Calculate frame time.
 float Window::lastFrameTime;
 float Window::delta;
 
+//Toon shading boolean.
+bool Window::toon_shading = false;
+
 void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(2, 2);//Initialize the scenery for the entire program.
-	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
+	scenery = new Scenery(8, 8, skyBox->getSkyBox());//Initialize the scenery for the entire program.
 	world_light = new Light();//Initialize the global light.
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
@@ -79,7 +85,6 @@ void Window::initialize_objects()
 	//Initialize any objects here, set it to a material.
 	object_1 = new OBJObject("../obj/songoku.obj", 5);
 	object_1_camera = new Camera(object_1);
-	particle = new Particle(object_1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
@@ -92,18 +97,21 @@ void Window::initialize_objects()
 	#else
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("./obj/pod.obj", 1);
+	object_1 = new OBJObject("./obj/songoku.obj", 5);
 	object_1_camera = new Camera(object_1);
 
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
-	shaderProgram = LoadShaders("shader.vert", "shader.frag");
-	shaderProgram_skybox = LoadShaders("skybox.vert", "skybox.frag");
-	shaderProgram_terrain = LoadShaders("terrain.vert", "terrain.frag");
-	shaderProgram_water = LoadShaders("water.vert", "water.frag");
+	shaderProgram = LoadShaders("./shader.vert", "./shader.frag");
+	shaderProgram_skybox = LoadShaders("./skybox.vert", "./skybox.frag");
+	shaderProgram_terrain = LoadShaders("./terrain.vert", "./terrain.frag");
+	shaderProgram_water = LoadShaders("./water.vert", "./water.frag");
+	shaderProgram_particle = LoadShaders("./particle.vert", "./particle.frag");
 
 	#endif
 
+	//Update the shader program and anything else.
 	world_light->updateLighting(shaderProgram);
+	object_1_camera->window_updateCamera();
 }
 
 void Window::clean_up()
@@ -111,11 +119,9 @@ void Window::clean_up()
 	//Delete any instantiated objects.
 	delete(skyBox);
 	delete(scenery);
-	delete(world_camera);
 	delete(world_light);
 	delete(object_1);
 	delete(object_1_camera);
-	delete(particle);
 
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
@@ -196,15 +202,33 @@ void Window::idle_callback()
 	float currentFrameTime = glfwGetTime();
 	Window::delta = (currentFrameTime - Window::lastFrameTime);
 	Window::lastFrameTime = currentFrameTime;
-	
-	particle->update();
-	
+	if (Window::toon_shading)
+	{
+		scenery->update_particles();
+	}
 }
 
 void Window::display_callback(GLFWwindow* window)
 {
-	//Draw the entire scene.
-	Window::redrawScene();
+	if (Window::draw_mode == DRAW_MODE_ALL)
+	{
+		//Draw the entire scene.
+		Window::redrawScene();
+	}
+	else if (Window::draw_mode == DRAW_MODE_TERRAIN)
+	{
+		Window::drawTerrain();
+	}
+	else if (Window::draw_mode == DRAW_MODE_WATER)
+	{
+		Window::drawWater();
+	}
+	else if (Window::draw_mode == DRAW_MODE_PARTICLE)
+	{
+		Window::drawParticles();
+	}
+
+
 	//Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 	//Swap buffers
@@ -222,8 +246,10 @@ void Window::redrawScene()
 	//Render the objects
 	object_1->draw(shaderProgram);
 
+	//Use the shader of programID
 	glUseProgram(shaderProgram_particle);
-	particle->draw(shaderProgram_particle);
+	//Render the objects
+	scenery->draw_particles(shaderProgram_particle);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_terrain);
@@ -234,6 +260,72 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram_water);
 	//Render the terrain
 	scenery->draw_water(shaderProgram_water);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_skybox);
+	//Render the skybox
+	skyBox->draw(shaderProgram_skybox);
+}
+
+void Window::drawTerrain()
+{
+	//Clear the color and depth buffers
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram);
+	//Render the objects
+	object_1->draw(shaderProgram);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_terrain);
+	//Render the terrain
+	scenery->draw_terrain(shaderProgram_terrain);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_skybox);
+	//Render the skybox
+	skyBox->draw(shaderProgram_skybox);
+}
+
+void Window::drawWater()
+{
+	//Clear the color and depth buffers
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram);
+	//Render the objects
+	object_1->draw(shaderProgram);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_water);
+	//Render the terrain
+	scenery->draw_water(shaderProgram_water);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_skybox);
+	//Render the skybox
+	skyBox->draw(shaderProgram_skybox);
+}
+
+void Window::drawParticles()
+{
+	//Clear the color and depth buffers
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram);
+	//Render the objects
+	object_1->draw(shaderProgram);
+
+	//Use the shader of programID
+	glUseProgram(shaderProgram_particle);
+	//Render the objects
+	scenery->draw_particles(shaderProgram_particle);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_skybox);
@@ -302,22 +394,29 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		if (key == GLFW_KEY_0){
-			Window::camera_mode = CAMERA_WORLD;
-			world_camera->window_updateCamera();
+			Window::draw_mode = DRAW_MODE_ALL;
 		}
 		if (key == GLFW_KEY_1) {
-			Window::camera_mode = CAMERA_1;
-			object_1_camera->window_updateCamera();
+			Window::draw_mode = DRAW_MODE_TERRAIN;
+		}
+		if (key == GLFW_KEY_2) {
+			Window::draw_mode = DRAW_MODE_WATER;
+		}
+		if (key == GLFW_KEY_3) {
+			Window::draw_mode = DRAW_MODE_PARTICLE;
 		}
 		if (key == GLFW_KEY_T) {
 			scenery->toggleDrawMode();
-			water->toggleDrawMode();
 		}
-		if (key == GLFW_KEY_UP) {
-			particle->increaseGravity();
-		}
-		if (key == GLFW_KEY_DOWN) {
-			particle->decreaseGravity();
+		if (key == GLFW_KEY_R) {
+			if (Window::toon_shading)
+			{
+				Window::toon_shading = false;
+			}
+			else if (!Window::toon_shading)
+			{
+				Window::toon_shading = true;
+			}
 		}
 	}
 }
@@ -395,8 +494,7 @@ void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double y
 	//Controls for the world camera.
 	if (Window::camera_mode == CAMERA_WORLD)
 	{
-		world_camera->camera_zoom(yoffset);
-		world_camera->window_updateCamera();
+
 	}
 	//Controls for camera 1.
 	if (Window::camera_mode == CAMERA_1)

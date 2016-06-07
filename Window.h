@@ -48,6 +48,15 @@ public:
 
 	static float lastFrameTime;
 	static float delta;
+
+	static bool toon_shading;
+
+	//Seperated drawing for demo.
+	static void drawTerrain();
+	static void drawWater();
+	static void drawParticles();
+
+	static int draw_mode;
 };
 
 #endif
