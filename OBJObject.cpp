@@ -1,10 +1,11 @@
 #include "OBJObject.h"
 #include "Window.h"
+#include <math.h>
 
 using namespace std;
 
-#define RUN_SPEED  500.0f
-#define TURN_SPEED  900.0f
+#define RUN_SPEED  50.0f
+#define TURN_SPEED  300.0f
 
 
 /* Initialize the object, parse it and set up buffers. */
@@ -202,6 +203,8 @@ void OBJObject::setupMaterial()
 /* Setup the cube geometry for the bounding box. */
 void OBJObject::setupGeometry() {
 
+	boxCoords.clear();
+
 	glm::vec3 v0 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] + ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
 	glm::vec3 v1 = glm::vec3(toWorld[3][0] - ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
 	glm::vec3 v2 = glm::vec3(toWorld[3][0] + ((maxX - minX) / 2), toWorld[3][1] - ((maxY - minY) / 2), toWorld[3][2] + ((maxZ - minZ) / 2));
@@ -268,8 +271,16 @@ void OBJObject::setupGeometry() {
 	boxCoords.push_back(v4);
 	boxCoords.push_back(v6);
 	boxCoords.push_back(v5);
-	
 
+	//Update the sizes of the coordinate system.
+	this->x_size = (v3.x - v0.x) / 2;
+	this->y_size = (v3.y - v2.y) / 2;
+	this->z_size = (v1.z - v5.z) / 2;
+	//Calculate scale factor.
+	float scale = glm::sqrt(toWorld[0][0] * toWorld[0][0] + toWorld[1][0] * toWorld[1][0] + toWorld[2][0] * toWorld[2][0]);
+	this->x_size *= scale/3;
+	this->y_size *= scale/3;
+	this->z_size *= scale/3;
 }
 
 /* Bind the cube to openGL for glsl shading. */
@@ -382,7 +393,7 @@ void OBJObject::D_movement(glm::vec2 boundaries)
 
 void OBJObject::update_height(float height)
 {
-	this->toWorld[3].y = height + 0.8f;
+	this->toWorld[3].y = height + y_size + 0.2f;
 }
 
 /* Collision detection. */
@@ -391,22 +402,21 @@ bool OBJObject::collision(OBJObject * obj2) {
 	glm::vec4 coord_a = this->toWorld[3];
 	glm::vec4 coord_b = obj2->toWorld[3];
 
-	float a_x_unit = (maxX - minX / 2);
-	float a_y_unit = (maxY - minY / 2);
-	float a_z_unit = (maxZ - minZ / 2);
+	bool collide = false;
+	//check the X axis
+	if (glm::abs(coord_a.x - coord_b.x) < 2*this->x_size + 2 * obj2->x_size)
+	{
+		//check the Y axis
+		if (glm::abs(coord_a.y - coord_b.y) < 2 * this->y_size + 2 * obj2->y_size)
+		{
+			//check the Z axis
+			if (glm::abs(coord_a.z - coord_b.z) < 2 * this->z_size + 2 * obj2->z_size)
+			{
+				collide = true;
+			}
+		}
+	}
 
-	float b_x_unit = (maxX - minX / 2);
-	float b_y_unit = (maxY - minY / 2);
-	float b_z_unit = (maxZ - minZ / 2);
-
-
-	bool collisionX = (coord_a.x + a_x_unit) >= coord_b.x && (coord_b.x + b_x_unit) >= coord_a.x;
-
-	bool collisionY = (coord_a.y + a_y_unit) >= coord_b.y && (coord_b.y + b_y_unit) >= coord_a.y;
-
-	bool collisionZ = (coord_a.z + a_z_unit) >= coord_b.z && (coord_b.z + b_z_unit) >= coord_a.z;
-
-	bool collide = collisionX && collisionY && collisionZ;
 	if (collide) {
 		collisionFlag = 1;
 		obj2->collisionFlag = 1;
@@ -415,7 +425,7 @@ bool OBJObject::collision(OBJObject * obj2) {
 		collisionFlag = 0;
 		obj2->collisionFlag = 0;
 	}
-	return collisionX && collisionY && collisionZ;
+	return collide;
 }
 
 /* Draw the bounding box. */

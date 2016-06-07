@@ -83,7 +83,7 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(1, 1, skyBox->getSkyBox());//Initialize the scenery for the entire program.
+	scenery = new Scenery(4, 4, skyBox->getSkyBox());//Initialize the scenery for the entire program.
 	world_light = new Light();//Initialize the global light.
 	SoundEngine = irrklang::createIrrKlangDevice();
 
@@ -91,8 +91,10 @@ void Window::initialize_objects()
 	#ifdef _WIN32 
 
 	//Initialize any objects here, set it to a material.
-	object_1 = new OBJObject("../obj/songoku.obj", 5);
+	object_1 = new OBJObject("../obj/songoku.obj", 1);
 	object_1->toWorld = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f)) * object_1->toWorld;
+	object_1->setupGeometry();
+	object_1->toWorld = glm::translate(glm::mat4(1.0f), glm::vec3(30.0f, 8.0f, 30.0f)) * object_1->toWorld;
 	object_1_camera = new Camera(object_1);
 
 	object_2 = new OBJObject("../obj/pod.obj", 3);
@@ -225,12 +227,10 @@ void Window::idle_callback()
 		scenery->update_particles();
 	}
 
-	if (object_1->collision(object_2))
-	{
-
-	}
+	//Draw collision color change per frame.
 	if (Window::draw_mode == DRAW_MODE_COLLISION)
 	{
+		object_1->collision(object_2);
 		drawCollision();
 	}
 }
@@ -406,6 +406,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
+			if (object_1->collision(object_2))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (aKey == GLFW_PRESS)
 		{
@@ -414,6 +418,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
+			if (object_1->collision(object_2))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (sKey == GLFW_PRESS)
 		{
@@ -422,6 +430,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
+			if (object_1->collision(object_2))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (dKey == GLFW_PRESS)
 		{
@@ -430,6 +442,14 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1->update_height(scenery->getHeight(glm::vec3(object_1->toWorld[3])));
 			object_1_camera->object_follow();
 			object_1_camera->window_updateCamera();
+			if (object_1->collision(object_2))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
+		}
+		if (object_1->toWorld[3].y <= 3) {
+			printf("in water\n");
+			//SoundEngine->play2D("../audio/splash.mp3", GL_FALSE);
 		}
 	}
 	//Controls for camera 2.
@@ -442,6 +462,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
 			object_2_camera->window_updateCamera();
+			if (object_2->collision(object_1))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (aKey == GLFW_PRESS)
 		{
@@ -450,6 +474,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
 			object_2_camera->window_updateCamera();
+			if (object_2->collision(object_1))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (sKey == GLFW_PRESS)
 		{
@@ -458,6 +486,10 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
 			object_2_camera->window_updateCamera();
+			if (object_2->collision(object_1))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
 		}
 		if (dKey == GLFW_PRESS)
 		{
@@ -466,6 +498,14 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
 			object_2_camera->object_follow();
 			object_2_camera->window_updateCamera();
+			if (object_2->collision(object_1))
+			{
+				SoundEngine->play2D("../audio/explosion.mp3", GL_FALSE);
+			}
+		}
+		if (object_2->toWorld[3].y <= 3) {
+			printf("in water\n");
+			//SoundEngine->play2D("../audio/splash.mp3", GL_FALSE);
 		}
 	}
 	//---------- Anything below this will be global keys. ----------//

@@ -67,6 +67,8 @@ public:
 
 	int collisionFlag;
 
+	float x_size, y_size, z_size;
+
 };
 
 #endif
