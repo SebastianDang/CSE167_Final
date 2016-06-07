@@ -55,8 +55,10 @@ public:
 	static void drawTerrain();
 	static void drawWater();
 	static void drawParticles();
+	static void drawCollision();
 
 	static int draw_mode;
+
 };
 
 #endif

@@ -19,5 +19,6 @@ out vec4 ParticleColor;
 void main()
 {
     gl_Position = MVP * vec4(vertex.x + offset.x, vertex.y + offset.y, vertex.z + offset.z, 1.0f);
+	FragPos = vec3(model * vec4(vertex.x, vertex.y, vertex.z, 1.0f));
 	ParticleColor = p_color;
 }

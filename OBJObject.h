@@ -14,6 +14,7 @@ private:
 	std::vector<Texture> textures;//List of textures
 
 	GLuint VAO, VBO, EBO;
+	GLuint VAOBOX, VBOBOX;
 	
 	Material objMaterial;//Material
 	int material;//Material selection
@@ -50,6 +51,22 @@ public:
 	void S_movement(glm::vec2 boundaries);
 	void D_movement(glm::vec2 boundaries);
 	void update_height(float height);
+
+	//Object collision.
+	std::vector<glm::vec3> boxCoords;
+
+	bool collision(OBJObject * obj);
+	void setCube();
+	void bindCube();
+	void drawBox(GLuint shaderProgram);
+
+	float minX, minY, minZ, maxX, maxY, maxZ, avgX, avgY, avgZ, scale_v;
+	glm::vec3 average;
+
+	float longestDim;
+
+	int collisionFlag;
+
 };
 
 #endif

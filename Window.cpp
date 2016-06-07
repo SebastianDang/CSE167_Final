@@ -20,6 +20,7 @@ const char* window_title = "The Island";
 #define DRAW_MODE_TERRAIN 1
 #define DRAW_MODE_WATER 2
 #define DRAW_MODE_PARTICLE 3
+#define DRAW_MODE_COLLISION 4
 
 //Define Mouse control status for idle, left hold, right hold.
 #define IDLE 0
@@ -34,9 +35,11 @@ const char* window_title = "The Island";
 
 //Define any cameras here.
 Camera * object_1_camera;
+Camera * object_2_camera;
 
 //Define any objects here.
 OBJObject * object_1;
+OBJObject * object_2;
 
 //Define any environment variables here. We should always have the skybox!
 SkyBox * skyBox;
@@ -49,6 +52,7 @@ GLint shaderProgram_skybox;
 GLint shaderProgram_terrain;
 GLint shaderProgram_water;
 GLint shaderProgram_particle;
+GLint shaderProgram_collision;
 
 //Window properties
 int Window::width;//Width of the window.
@@ -76,7 +80,7 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(8, 8, skyBox->getSkyBox());//Initialize the scenery for the entire program.
+	scenery = new Scenery(1, 1, skyBox->getSkyBox());//Initialize the scenery for the entire program.
 	world_light = new Light();//Initialize the global light.
 
 	//------------------------------ Windows (both 32 and 64 bit versions) ------------------------------ //
@@ -86,12 +90,17 @@ void Window::initialize_objects()
 	object_1 = new OBJObject("../obj/songoku.obj", 5);
 	object_1_camera = new Camera(object_1);
 
+	object_2 = new OBJObject("../obj/pod.obj", 3);
+	object_2_camera = new Camera(object_2);
+
 	//Load the shader programs. Similar to the .obj objects, different platforms expect a different directory for files
 	shaderProgram = LoadShaders("../shader.vert", "../shader.frag");
 	shaderProgram_skybox = LoadShaders("../skybox.vert", "../skybox.frag");
 	shaderProgram_terrain = LoadShaders("../terrain.vert", "../terrain.frag");
 	shaderProgram_water = LoadShaders("../water.vert", "../water.frag");
 	shaderProgram_particle = LoadShaders("../particle.vert", "../particle.frag");
+	shaderProgram_collision = LoadShaders("../collision.vert", "../collision.frag");
+
 	
 	//----------------------------------- Not Windows (MAC OSX) ---------------------------------------- //
 	#else
@@ -121,7 +130,9 @@ void Window::clean_up()
 	delete(scenery);
 	delete(world_light);
 	delete(object_1);
+	delete(object_2);
 	delete(object_1_camera);
+	delete(object_2_camera);
 
 	//Delete shaders.
 	glDeleteProgram(shaderProgram);
@@ -129,6 +140,7 @@ void Window::clean_up()
 	glDeleteProgram(shaderProgram_terrain);
 	glDeleteProgram(shaderProgram_water);
 	glDeleteProgram(shaderProgram_particle);
+	glDeleteProgram(shaderProgram_collision);
 }
 
 GLFWwindow* Window::create_window(int width, int height)
@@ -206,6 +218,15 @@ void Window::idle_callback()
 	{
 		scenery->update_particles();
 	}
+
+	if (object_1->collision(object_2))
+	{
+
+	}
+	if (Window::draw_mode == DRAW_MODE_COLLISION)
+	{
+		drawCollision();
+	}
 }
 
 void Window::display_callback(GLFWwindow* window)
@@ -227,8 +248,12 @@ void Window::display_callback(GLFWwindow* window)
 	{
 		Window::drawParticles();
 	}
-
-
+	else if (Window::draw_mode == DRAW_MODE_COLLISION)
+	{
+		//Draw the entire scene.
+		Window::redrawScene();
+		Window::drawCollision();
+	}
 	//Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 	//Swap buffers
@@ -245,6 +270,7 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram);
 	//Render the objects
 	object_1->draw(shaderProgram);
+	object_2->draw(shaderProgram);
 
 	//Use the shader of programID
 	glUseProgram(shaderProgram_particle);
@@ -265,6 +291,7 @@ void Window::redrawScene()
 	glUseProgram(shaderProgram_skybox);
 	//Render the skybox
 	skyBox->draw(shaderProgram_skybox);
+
 }
 
 void Window::drawTerrain()
@@ -333,6 +360,15 @@ void Window::drawParticles()
 	skyBox->draw(shaderProgram_skybox);
 }
 
+void Window::drawCollision()
+{
+	//Use the shader of programID
+	glUseProgram(shaderProgram_collision);
+	//Render the skybox
+	object_1->drawBox(shaderProgram_collision);
+	object_2->drawBox(shaderProgram_collision);
+}
+
 /* Handle Key input. */
 void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -383,6 +419,38 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			object_1_camera->window_updateCamera();
 		}
 	}
+	//Controls for camera 2.
+	if (Window::camera_mode == CAMERA_2)
+	{
+		if (wKey == GLFW_PRESS)
+		{
+			object_2->W_movement(scenery->getBounds());
+			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
+			object_2_camera->object_follow();
+			object_2_camera->window_updateCamera();
+		}
+		if (aKey == GLFW_PRESS)
+		{
+			object_2->A_movement(scenery->getBounds());
+			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
+			object_2_camera->object_follow();
+			object_2_camera->window_updateCamera();
+		}
+		if (sKey == GLFW_PRESS)
+		{
+			object_2->S_movement(scenery->getBounds());
+			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
+			object_2_camera->object_follow();
+			object_2_camera->window_updateCamera();
+		}
+		if (dKey == GLFW_PRESS)
+		{
+			object_2->D_movement(scenery->getBounds());
+			object_2->update_height(scenery->getHeight(glm::vec3(object_2->toWorld[3])));
+			object_2_camera->object_follow();
+			object_2_camera->window_updateCamera();
+		}
+	}
 	//---------- Anything below this will be global keys. ----------//
 	//Check for a single key press (Not holds)
 	if (action == GLFW_PRESS)
@@ -405,6 +473,9 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 		if (key == GLFW_KEY_3) {
 			Window::draw_mode = DRAW_MODE_PARTICLE;
 		}
+		if (key == GLFW_KEY_4) {
+			Window::draw_mode = DRAW_MODE_COLLISION;
+		}
 		if (key == GLFW_KEY_T) {
 			scenery->toggleDrawMode();
 		}
@@ -416,6 +487,18 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			else if (!Window::toon_shading)
 			{
 				Window::toon_shading = true;
+			}
+		}
+		if (key == GLFW_KEY_C) {
+			if (Window::camera_mode == CAMERA_1)
+			{
+				Window::camera_mode = CAMERA_2;
+				object_2_camera->window_updateCamera();
+			}
+			else if (Window::camera_mode == CAMERA_2)
+			{
+				Window::camera_mode = CAMERA_1;
+				object_1_camera->window_updateCamera();
 			}
 		}
 	}
@@ -452,6 +535,20 @@ void Window::cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 		{
 			object_1_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
 			object_1_camera->window_updateCamera();
+		}
+		//On right drag, we perform translations. Relative to the object.
+		if (Window::mouse_status == RIGHT_HOLD)
+		{
+		}
+	}
+	//Controls for camera 2.
+	if (Window::camera_mode == CAMERA_2)
+	{
+		//On left drag, we perform rotations. Relative to the object.
+		if (Window::mouse_status == LEFT_HOLD)
+		{
+			object_2_camera->camera_rotate_around(Window::lastPoint, point);//Use this to orbit the camera.
+			object_2_camera->window_updateCamera();
 		}
 		//On right drag, we perform translations. Relative to the object.
 		if (Window::mouse_status == RIGHT_HOLD)
@@ -501,6 +598,12 @@ void Window::cursor_scroll_callback(GLFWwindow* window, double xoffset, double y
 	{
 		object_1_camera->camera_zoom(yoffset);
 		object_1_camera->window_updateCamera();
+	}
+	//Controls for camera 1.
+	if (Window::camera_mode == CAMERA_2)
+	{
+		object_2_camera->camera_zoom(yoffset);
+		object_2_camera->window_updateCamera();
 	}
 }
 
