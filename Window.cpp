@@ -69,7 +69,7 @@ void Window::initialize_objects()
 {
 	//Initialize world variables.
 	skyBox = new SkyBox();//Initialize the default skybox.
-	scenery = new Scenery(2, 2);//Initialize the scenery for the entire program.
+	scenery = new Scenery(8, 8);//Initialize the scenery for the entire program.
 	world_camera = new Camera(Window::camera_pos, Window::camera_look_at, Window::camera_up);//Initialize the global world camera.
 	world_light = new Light();//Initialize the global light.
 
@@ -313,11 +313,7 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 			scenery->toggleDrawMode();
 			water->toggleDrawMode();
 		}
-		if (key == GLFW_KEY_UP) {
-			particle->increaseGravity();
-		}
-		if (key == GLFW_KEY_DOWN) {
-			particle->decreaseGravity();
+		if (key == GLFW_KEY_R) {
 		}
 	}
 }

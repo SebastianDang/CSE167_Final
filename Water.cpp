@@ -18,28 +18,28 @@
 /// 4x4 grid of points that will define the surface
 Point Points[4][4] = {
     {
-        { (2 * WATER_SIZE), HEIGHT, (2 * WATER_SIZE) },
-		{ WATER_SIZE, HEIGHT, (2 * WATER_SIZE) },
-		{ -WATER_SIZE, HEIGHT, (2 * WATER_SIZE) },
-        {-(2*WATER_SIZE), HEIGHT, (2*WATER_SIZE) }
+        { (2 * WATER_SIZE),HEIGHT,(2 * WATER_SIZE) },
+		{ WATER_SIZE,HEIGHT,(2 * WATER_SIZE) },
+		{ -WATER_SIZE,HEIGHT,(2 * WATER_SIZE) },
+        {-(2*WATER_SIZE),HEIGHT,(2*WATER_SIZE) }
     },
     {
-        { (2*WATER_SIZE), HEIGHT, WATER_SIZE },
-        {  WATER_SIZE, HEIGHT, WATER_SIZE },
-        { -WATER_SIZE, HEIGHT, WATER_SIZE },
-        {-(2*WATER_SIZE), HEIGHT, WATER_SIZE }
+        { (2*WATER_SIZE),HEIGHT,WATER_SIZE },
+        {  WATER_SIZE,HEIGHT,WATER_SIZE },
+        { -WATER_SIZE,HEIGHT,WATER_SIZE },
+        {-(2*WATER_SIZE),HEIGHT,WATER_SIZE }
     },
     {
-        { (2*WATER_SIZE), HEIGHT, -WATER_SIZE },
-        {  WATER_SIZE, HEIGHT, -WATER_SIZE },
-        { -WATER_SIZE, HEIGHT, -WATER_SIZE },
-        {-(2*WATER_SIZE), HEIGHT, -WATER_SIZE }
+        { (2*WATER_SIZE),HEIGHT,-WATER_SIZE },
+        {  WATER_SIZE,HEIGHT,-WATER_SIZE },
+        { -WATER_SIZE,HEIGHT,-WATER_SIZE },
+        {-(2*WATER_SIZE),HEIGHT,-WATER_SIZE }
     },
     {
-        { (2*WATER_SIZE), HEIGHT,-(2*WATER_SIZE) },
-        {  WATER_SIZE, HEIGHT,-(2*WATER_SIZE) },
-        { -WATER_SIZE, HEIGHT,-(2*WATER_SIZE) },
-        {-(2*WATER_SIZE), HEIGHT, -(2*WATER_SIZE) }
+        { (2*WATER_SIZE),HEIGHT,-(2*WATER_SIZE) },
+        {  WATER_SIZE,HEIGHT,-(2*WATER_SIZE) },
+        { -WATER_SIZE,HEIGHT,-(2*WATER_SIZE) },
+        {-(2*WATER_SIZE),HEIGHT, -(2*WATER_SIZE) }
     }
 };
 
